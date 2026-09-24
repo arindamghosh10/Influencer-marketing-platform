@@ -281,9 +281,7 @@ Consent should be **structured data, not just a PDF**. Build a **Consent Ledger*
 ---
 
 ## 12. Reporting and analytics
-- **Brand dashboard**: spend, reach, engagement, CPM/CPE, link clicks (UTM / short links), discount-code redemptions (Shopify integration), content library with licence expiry dates.
-- **Creator dashboard**: earnings, pending payouts with countdown, TDS statements, ratings, suggested rate.
-- **Ops dashboard**: funnel by state, stuck workflows, disputes, fraud flags, Meta API health.
+Brands, creators and ops each get a full dashboard: action items, status with the next step, performance vs prediction, money flow, content and usage rights, consent records, AI insights, and exportable reports. Full spec: **[DASHBOARDS.md](DASHBOARDS.md)**.
 
 ---
 
