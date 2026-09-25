@@ -195,14 +195,19 @@ Side branches from any state: CANCELLED (rule-based refunds) · DISPUTE (ops) ·
 
 ## 7. Payments, escrow and payouts
 
-- **Use a marketplace payments product. Don't hold money yourself.** In India: Razorpay Route / Cashfree Split / Juspay with escrow. Global: Stripe Connect (separate charges and transfers, delayed payouts). Holding customer funds yourself can require a payment aggregator licence (RBI PA guidelines in India).
+- **Commercial structure (decided): the platform is the principal.** The brand buys the campaign from the platform, and the platform separately engages each creator. Because the platform collects its own revenue and pays its own suppliers (the creators), it doesn't need a marketplace split or escrow licence. "Escrow" becomes an internal ledger with a hold until verification ends.
+  - Collections: Razorpay Payment Gateway (or Cashfree PG). Payouts: RazorpayX Payouts (or Cashfree Payouts).
+  - Keep creator money in a separate current account ("creator payables") so it is never spent on operations.
 - **Flow**:
-  1. Brand pays campaign total plus platform fee plus GST at checkout (card/UPI/netbanking/invoice for enterprise).
-  2. Funds held in the gateway's escrow/nodal account, split per creator.
-  3. On `PAYOUT_RELEASED` (post verified live for 7 days), transfer to the creator's verified bank account.
+  1. Brand pays the campaign price plus 18% GST at checkout (card/UPI/netbanking/invoice for enterprise), only for creators who accepted.
+  2. Money sits in the creator-payables account; the ledger marks each slot's amount as "held".
+  3. On `PAYOUT_RELEASED` (post verified live for 7 days), pay the creator their fee minus TDS to their verified bank account.
 - **Why 7 days?** It covers the verification window and early-deletion risk. A **minimum live period (30 days suggested; 90 for premium)** is enforced by contract. Monitoring continues after payout, and a violation can be clawed back from future earnings or a small held reserve.
-- **Tax (India example; get it confirmed by a CA)**: GST on platform fee and possibly on creator services (creators above the threshold add GST; collect GSTIN); **TDS** deductions on creator payments (e.g. 194-O / 194J as applicable), with automated Form 16A and a creator earnings statement. Similar 1099 / VAT handling for other regions later.
-- **Business model**: brand-side platform fee of 15-20% on creator fees, plus optional subscription (more campaigns, analytics, usage rights). Keep creators at 0% fee initially to win supply.
+- **Tax (India; get it confirmed by a CA)**: 18% GST on the full campaign price charged to the brand. Creators registered for GST invoice the platform with GST, which the platform can claim as input credit. **TDS** on creator payments (likely section 194C for advertising work; confirm with CA), with automated Form 16A and an earnings statement.
+- **Business model (decided): 50/50 split, not disclosed.** Brand price = creator fee ÷ (1 − margin), with the margin defaulting to 50%. Brands see only the price they pay. Creators see only the fee they receive. Rules that keep this safe:
+  - Contracts and UI never state or imply that the creator gets the brand's full payment.
+  - The margin is a setting (global and per campaign), so it can be tuned if brands or creators push back. 50% is well above the market norm of roughly 20-30%.
+  - Brand and creator talk only through in-app chat with contact details masked, plus a non-circumvention clause.
 - **Refund policy (automatic)**:
   - Before creator acceptance: 100%.
   - After acceptance, before content: 100% minus a small fee to the creator (cancellation compensation).
@@ -351,14 +356,16 @@ Brands, creators and ops each get a full dashboard: action items, status with th
 
 ---
 
-## 17. Open questions for the founder
-1. Launch geography: India first? (It affects KYC, payments, tax, WhatsApp priority, and which laws apply.)
-2. Which 3-4 niches to launch with?
-3. Is AI-generated content a core promise to brands, or a speed/cost helper? (This decides whether Mode A or C is the headline.)
-4. Should brands be able to reuse creator content in paid ads (whitelisting) from day 1?
-5. Fixed-fee only, or also performance bonuses?
-6. Target creator tier: nano/micro (1k-100k), which is easier to onboard and cheaper, or larger?
-7. Budget and team for MVP (build in-house vs agency)?
+## 17. Founder decisions (24 Sep 2026)
+| # | Question | Decision | What it changes |
+|---|---|---|---|
+| 1 | Launch geography | **India first** | INR only, GST/TDS, Indian KYC (PAN, GSTIN, bank verification), Razorpay/Cashfree, WhatsApp as the main channel, DPDP Act |
+| 2 | Launch niches | **All in-demand niches (15+ top-level categories with sub-niches)** | Full taxonomy from day 1. Matching must show "not enough creators in this niche yet" instead of weak matches. Supply-seeding tracks coverage per niche |
+| 3 | Role of AI | **Speed/cost helper** | Mode A (creator-made, AI-assisted) is the headline. Mode C (AI avatars) is an add-on later |
+| 4 | Paid-ads reuse (whitelisting) | **Yes, from day 1, in both contracts** | Usage rights for paid ads are a standard clause. The creator must also grant the brand partner access in the Instagram app, so the platform tracks and reminds |
+| 5 | Pricing | **50/50 split of the campaign price, not disclosed** | Principal model, margin engine, strictly separated brand and creator views (see §7) |
+| 6 | Creator tier | **Nano and micro (1k-100k followers)** | Authenticity checks matter more. Onboarding must be fully self-serve and mobile-first |
+| 7 | Build | **Claude builds it** | Tech plan and task list: [TECH_PLAN.md](TECH_PLAN.md) |
 
 ---
 

@@ -143,7 +143,8 @@
 | Creator per-post insights for campaign posts | ✗ | ✔ | ✔ | ✔ |
 | Creator organic post insights | ✗ | ✗ | ✔ | ✔ (support only) |
 | Creator KYC / bank / PAN | ✗ | ✗ | ✔ | ✔ (restricted role) |
-| Creator rate card | Price shown per deliverable | ✔ | ✔ | ✔ |
+| Creator fee (what the creator receives) | ✗ | ✗ | ✔ | ✔ |
+| Brand price (what the brand pays) | ✔ | ✔ | ✗ | ✔ |
 | Brand sales / revenue data | n/a | Brand only | ✗ (optional: see "your code drove 42 orders") | Aggregated |
 | Other brands' campaigns | ✗ | ✗ | ✗ | ✔ |
 

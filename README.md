@@ -4,3 +4,4 @@ A two-sided marketplace that connects brands with creators and matches them auto
 
 - Product plan: [docs/PRODUCT_PLAN.md](docs/PRODUCT_PLAN.md)
 - Dashboards and analytics spec: [docs/DASHBOARDS.md](docs/DASHBOARDS.md)
+- Tech stack, APIs and task list: [docs/TECH_PLAN.md](docs/TECH_PLAN.md)
