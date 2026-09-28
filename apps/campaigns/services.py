@@ -88,3 +88,66 @@ def confirm_brief(campaign, brief, actor):
 def needs_review(brief):
     category = brief.data.get("restricted_category")
     return bool(category) and category not in {c.value for c in BLOCKED_CATEGORIES}
+
+
+COPIED_FIELDS = [
+    "brand",
+    "objective",
+    "product_url",
+    "product_notes",
+    "product_image",
+    "budget",
+    "creators_wanted",
+    "deliverable",
+    "target_gender",
+    "target_cities",
+    "languages",
+    "content_mode",
+    "usage_rights_days",
+    "paid_ads_allowed",
+    "must_say",
+    "must_not_say",
+]
+
+
+def can_repeat(campaign):
+    return campaign.confirmed_brief is not None and campaign.status != Campaign.Status.CANCELLED
+
+
+@transaction.atomic
+def repeat_campaign(campaign, actor):
+    """Start a new campaign with the same settings and confirmed brief.
+
+    The new campaign goes straight to creator selection; creators who delivered last time are
+    matched first when they're still available. Pricing, ops sign-off and the content deadline
+    are not copied: they're decided fresh for the new campaign.
+    """
+    from apps.matching.services import run_matching
+
+    brief = campaign.confirmed_brief
+    if not can_repeat(campaign):
+        raise ValueError("Only campaigns with a confirmed brief can be run again.")
+    new = Campaign(
+        title=f"{campaign.title} (repeat)"[:200],
+        status=Campaign.Status.BRIEF_CONFIRMED,
+        repeat_of=campaign,
+        **{f: getattr(campaign, f) for f in COPIED_FIELDS},
+    )
+    new.save()
+    ProductBrief.objects.create(
+        campaign=new,
+        version=1,
+        source=brief.source,
+        data=brief.data,
+        confirmed_at=timezone.now(),
+        confirmed_by=actor,
+    )
+    record(
+        "campaign.repeated",
+        f"Campaign '{new}' created from '{campaign}'",
+        actor=actor,
+        target=new,
+        data={"repeat_of": campaign.pk},
+    )
+    run_matching(new)
+    return new

@@ -13,7 +13,7 @@ from apps.matching.views_models import brand_candidates
 from apps.niches.models import Niche, SensitiveCategory
 
 from . import services
-from .forms import BriefEditForm, CampaignForm
+from .forms import AddCreatorsForm, BriefEditForm, CampaignForm
 from .models import Campaign
 
 STAGES = [
@@ -137,8 +137,8 @@ def _selection_summary(run):
         "subtotal": subtotal,
         "gst": tax,
         "total": subtotal + tax,
-        "budget": run.campaign.budget,
-        "over_budget": subtotal > run.campaign.budget,
+        "budget": run.selection_budget,
+        "over_budget": subtotal > run.selection_budget,
     }
 
 
@@ -168,6 +168,9 @@ def detail(request, pk):
         "events": events_for(campaign)[:30],
         "editable": campaign.status == Campaign.Status.BRIEF_CONFIRMED,
         "locked": campaign.status in LOCKED,
+        "can_repeat": services.can_repeat(campaign),
+        "can_add_creators": campaign.status in _top_up_statuses(),
+        "pending_top_up": run.is_pending_top_up if run else False,
     }
     if campaign.status == Campaign.Status.SHORTLISTED:
         from apps.offers.services import send_blockers
@@ -322,17 +325,18 @@ def toggle_candidate(request, pk, candidate_id):
     campaign = _campaign(request, pk)
     run = campaign.match_runs.first()
     mc = get_object_or_404(MatchCandidate, pk=candidate_id, run=run)
-    if campaign.status == Campaign.Status.BRIEF_CONFIRMED:
+    editable = _selection_editable(campaign, run)
+    if editable:
         mc.selected = not mc.selected
         mc.save(update_fields=["selected"])
     if not request.htmx:  # plain form post (JavaScript unavailable): reload the page
-        return redirect("campaigns:detail", pk=pk)
+        return redirect("campaigns:add_creators" if run.is_pending_top_up else "campaigns:detail", pk=pk)
     candidate = next(c for c in brand_candidates(run) if c.id == mc.pk)
     context = {
         "c": candidate,
         "campaign": campaign,
         "summary": _selection_summary(run),
-        "editable": campaign.status == Campaign.Status.BRIEF_CONFIRMED,
+        "editable": editable,
     }
     return render(request, "campaigns/partials/candidate_toggle.html", context)
 
@@ -360,4 +364,102 @@ def confirm_selection(request, pk):
         request=request,
     )
     messages.success(request, "Creators selected. Send them offers when you're ready.")
+    return redirect("campaigns:detail", pk=pk)
+
+
+def _top_up_statuses():
+    from apps.offers.services import TOP_UP_STATUSES
+
+    return TOP_UP_STATUSES
+
+
+def _selection_editable(campaign, run):
+    if run.is_pending_top_up:
+        return campaign.status in _top_up_statuses()
+    return campaign.status == Campaign.Status.BRIEF_CONFIRMED
+
+
+@brand_required
+@require_POST
+def repeat(request, pk):
+    campaign = _campaign(request, pk)
+    if not services.can_repeat(campaign):
+        messages.error(request, "Only campaigns with a confirmed brief can be run again.")
+        return redirect("campaigns:detail", pk=pk)
+    new = services.repeat_campaign(campaign, request.user)
+    messages.success(
+        request,
+        "New campaign created with the same brief and settings. Creators who delivered last time "
+        "are selected first when they're available. Check the budget and creators, then confirm.",
+    )
+    return redirect("campaigns:detail", pk=new.pk)
+
+
+@brand_required
+def add_creators(request, pk):
+    """Find and offer more creators for a running campaign."""
+    campaign = _campaign(request, pk)
+    if campaign.status not in _top_up_statuses():
+        messages.warning(request, "Creators can only be added while the campaign is running.")
+        return redirect("campaigns:detail", pk=pk)
+    run = campaign.match_runs.first()
+    pending = run if run and run.is_pending_top_up else None
+    form = AddCreatorsForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        pending = matching.run_matching(
+            campaign, top_up_budget=form.budget_paise, top_up_count=form.cleaned_data["count"]
+        )
+        record(
+            "campaign.top_up_matched",
+            f"Looked for {form.cleaned_data['count']} more creators",
+            actor=request.user,
+            target=campaign,
+        )
+        return redirect("campaigns:add_creators", pk=pk)
+    if pending and request.method == "GET":
+        form = AddCreatorsForm(
+            initial={"count": pending.creators_wanted, "budget_rupees": pending.budget // 100}
+        )
+    context = {
+        "campaign": campaign,
+        "form": form,
+        "run": pending,
+        "candidates": brand_candidates(pending) if pending else [],
+        "summary": _selection_summary(pending),
+        "editable": True,
+    }
+    if pending:
+        from apps.offers.services import send_blockers
+
+        context["send_blockers"] = send_blockers(campaign)
+    return render(request, "campaigns/add_creators.html", context)
+
+
+@brand_required
+@require_POST
+def send_top_up(request, pk):
+    from apps.offers import services as offers
+
+    campaign = _campaign(request, pk)
+    try:
+        slots = offers.send_top_up(campaign, request.user)
+    except offers.OfferError as exc:
+        messages.error(request, str(exc))
+        return redirect("campaigns:add_creators", pk=pk)
+    messages.success(
+        request,
+        f"Offers sent to {len(slots)} more creator{'s' if len(slots) != 1 else ''}. Pay for each one "
+        "once they accept.",
+    )
+    return redirect("campaigns:detail", pk=pk)
+
+
+@brand_required
+@require_POST
+def discard_top_up(request, pk):
+    campaign = _campaign(request, pk)
+    run = campaign.match_runs.first()
+    if run and run.is_pending_top_up:
+        run.delete()
+        messages.info(request, "Discarded. No offers were sent.")
     return redirect("campaigns:detail", pk=pk)

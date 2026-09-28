@@ -41,6 +41,8 @@ class CampaignSpec:
     needs_ai_likeness: bool = False
     competitors: list[str] = field(default_factory=list)
     min_authenticity: int = 60
+    # Creators who delivered for this brand before (repeat campaigns): picked first if eligible.
+    preferred_ids: set[int] = field(default_factory=set)
 
 
 @dataclass
@@ -228,8 +230,13 @@ def match(candidates, spec):
     scored = []
     for c in eligible:
         total, components, price = score(c, spec, best_value)
-        scored.append(Scored(c, total, components, price, explain(c, components, spec, price)))
+        reasons = explain(c, components, spec, price)
+        if c.id in spec.preferred_ids:
+            reasons = ["Delivered your last campaign", *reasons][:3]
+        scored.append(Scored(c, total, components, price, reasons))
     scored.sort(key=lambda s: s.score, reverse=True)
+    if spec.preferred_ids:  # stable sort: preferred first, each group still by score
+        scored.sort(key=lambda s: s.candidate.id not in spec.preferred_ids)
 
     # Greedy selection by score within budget. If the brand didn't say how many creators,
     # spend the budget on the best creators we can fit.

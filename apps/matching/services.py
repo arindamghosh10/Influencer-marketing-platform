@@ -10,7 +10,28 @@ from . import engine
 from .models import MatchCandidate, MatchRun
 
 
-def spec_for(campaign, brief):
+def previous_creator_ids(campaign):
+    """Creators whose posts went live in the campaign this one repeats."""
+    if campaign.repeat_of_id is None:
+        return set()
+    from apps.offers.models import Slot
+
+    return set(
+        Slot.objects.filter(
+            campaign_id=campaign.repeat_of_id,
+            status__in=[Slot.Status.LIVE, Slot.Status.VERIFIED],
+        ).values_list("creator_id", flat=True)
+    )
+
+
+def already_in(campaign):
+    """Creators who were offered this campaign at any point (never offered twice)."""
+    from apps.offers.models import Offer
+
+    return set(Offer.objects.filter(slot__campaign=campaign).values_list("creator_id", flat=True))
+
+
+def spec_for(campaign, brief, *, budget=None, creators_wanted=None):
     data = brief.data
     slugs = data.get("niche_slugs") or []
     # Parent of every niche (the taxonomy is small), so creators in sibling niches of the
@@ -20,9 +41,9 @@ def spec_for(campaign, brief):
         niche_slugs=slugs,
         niche_parents=parents,
         keywords=data.get("keywords") or [],
-        budget=campaign.budget,
+        budget=campaign.budget if budget is None else budget,
         margin_bps=campaign.margin_bps,
-        creators_wanted=campaign.creators_wanted,
+        creators_wanted=campaign.creators_wanted if budget is None else creators_wanted,
         target_gender=campaign.target_gender,
         target_cities=campaign.target_cities,
         languages=campaign.languages,
@@ -30,12 +51,14 @@ def spec_for(campaign, brief):
         needs_ai_likeness=campaign.content_mode == campaign.ContentMode.AI_LIKENESS,
         competitors=campaign.brand.competitors,
         min_authenticity=settings.MIN_AUTHENTICITY_SCORE,
+        preferred_ids=previous_creator_ids(campaign),
     )
 
 
-def candidates_for(campaign):
+def candidates_for(campaign, exclude_ids=()):
     creators = (
         CreatorProfile.objects.filter(status=CreatorProfile.Status.APPROVED)
+        .exclude(pk__in=exclude_ids)
         .select_related("primary_niche__parent")
         .prefetch_related("niches")
     )
@@ -93,17 +116,29 @@ def candidates_for(campaign):
 
 
 @transaction.atomic
-def run_matching(campaign):
+def run_matching(campaign, *, top_up_budget=None, top_up_count=None):
+    """Match creators for the campaign.
+
+    With `top_up_budget`, match extra creators for a campaign whose offers are already out:
+    the budget and count apply to the new creators only, and anyone already offered this
+    campaign is left out.
+    """
     brief = campaign.confirmed_brief
     if brief is None:
         raise ValueError("Confirm the brief before matching.")
-    result = engine.match(candidates_for(campaign), spec_for(campaign, brief))
+    top_up = top_up_budget is not None
+    spec = spec_for(campaign, brief, budget=top_up_budget, creators_wanted=top_up_count)
+    exclude = already_in(campaign) if top_up else ()
+    result = engine.match(candidates_for(campaign, exclude), spec)
     run = MatchRun.objects.create(
         campaign=campaign,
         brief=brief,
         eligible_count=result.eligible_count,
         excluded_counts=result.excluded,
         shortage=result.shortage,
+        purpose=MatchRun.Purpose.TOP_UP if top_up else MatchRun.Purpose.INITIAL,
+        budget=top_up_budget,
+        creators_wanted=top_up_count,
     )
     rank = 0
     for role, items in (

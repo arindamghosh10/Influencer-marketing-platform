@@ -14,5 +14,9 @@ urlpatterns = [
     path("<int:pk>/candidates/<int:candidate_id>/toggle/", views.toggle_candidate, name="toggle_candidate"),
     path("<int:pk>/selection/confirm/", views.confirm_selection, name="confirm_selection"),
     path("<int:pk>/offers/send/", views.send_offers, name="send_offers"),
+    path("<int:pk>/repeat/", views.repeat, name="repeat"),
+    path("<int:pk>/add-creators/", views.add_creators, name="add_creators"),
+    path("<int:pk>/add-creators/send/", views.send_top_up, name="send_top_up"),
+    path("<int:pk>/add-creators/discard/", views.discard_top_up, name="discard_top_up"),
     path("<int:pk>/slots/<int:slot_id>/cancel/", views.cancel_slot, name="cancel_slot"),
 ]

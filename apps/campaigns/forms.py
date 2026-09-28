@@ -146,3 +146,16 @@ class BriefEditForm(StyledFormMixin, forms.Form):
             "niche_slugs": [n.slug for n in c["niches"]],
             "keywords": [k.lower() for k in split_csv(c["keywords"])],
         }
+
+
+class AddCreatorsForm(StyledFormMixin, forms.Form):
+    count = forms.IntegerField(label="How many more creators?", min_value=1, max_value=20, initial=2)
+    budget_rupees = forms.IntegerField(
+        label="Extra budget (₹, excluding GST)",
+        min_value=1_000,
+        help_text="Added to the campaign budget only when you send the new offers.",
+    )
+
+    @property
+    def budget_paise(self):
+        return rupees_to_paise(self.cleaned_data["budget_rupees"])

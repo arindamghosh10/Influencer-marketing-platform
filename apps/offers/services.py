@@ -20,7 +20,7 @@ from apps.campaigns.services import needs_review
 from apps.core.events import notify, record
 from apps.core.money import format_inr
 from apps.creators.models import CreatorProfile
-from apps.matching.models import MatchCandidate
+from apps.matching.models import MatchCandidate, MatchRun
 
 from .models import Offer, Slot
 
@@ -109,10 +109,58 @@ def send_offers(campaign, actor):
     return campaign.slots.all()
 
 
+TOP_UP_STATUSES = (Campaign.Status.OFFERS_OUT, Campaign.Status.ACTIVE)
+
+
+@transaction.atomic
+def send_top_up(campaign, actor):
+    """Send offers to the extra creators picked in a top-up run and add its budget."""
+    campaign = Campaign.objects.select_for_update().get(pk=campaign.pk)
+    run = campaign.match_runs.first()
+    if run is None or not run.is_pending_top_up:
+        raise OfferError("Find more creators first.")
+    if campaign.status not in TOP_UP_STATUSES:
+        raise OfferError("Creators can only be added while the campaign is running.")
+    problems = send_blockers(campaign)
+    if problems:
+        raise OfferError(problems[0])
+    selected = list(run.candidates.filter(selected=True).select_related("creator__user").order_by("rank"))
+    if not selected:
+        raise OfferError("Select at least one creator first.")
+    if sum(c.brand_price for c in selected) > run.budget:
+        raise OfferError("Your selection is over the extra budget. Remove a creator or add more budget.")
+    taken = Offer.objects.filter(slot__campaign=campaign, creator_id__in=[c.creator_id for c in selected])
+    if taken.exists():
+        raise OfferError("Some of these creators were already offered this campaign. Find creators again.")
+    start = campaign.slots.count()
+    slots = []
+    for position, candidate in enumerate(selected, start=start + 1):
+        slot = Slot.objects.create(campaign=campaign, position=position)
+        _make_offer(slot, candidate, actor)
+        slots.append(slot)
+    campaign.budget += run.budget
+    campaign.save(update_fields=["budget", "updated_at"])
+    run.sent_at = timezone.now()
+    run.save(update_fields=["sent_at"])
+    record(
+        "campaign.topped_up",
+        f"{len(slots)} more creator{'s' if len(slots) != 1 else ''} offered; budget raised by "
+        f"{format_inr(run.budget)}",
+        actor=actor,
+        target=campaign,
+    )
+    return slots
+
+
+def backup_run(campaign):
+    """Latest match run whose backups may be offered (never an unsent top-up)."""
+    return campaign.match_runs.exclude(purpose=MatchRun.Purpose.TOP_UP, sent_at__isnull=True).first()
+
+
 def next_candidate(slot):
     """Best remaining backup for this slot that still fits the budget and is available."""
     campaign = slot.campaign
-    run = campaign.match_runs.first()
+    run = backup_run(campaign)
     tried = Offer.objects.filter(slot__campaign=campaign).values_list("creator_id", flat=True)
     headroom = campaign.budget - committed_amount(campaign, exclude_slot=slot)
     # Only the backup list: recommended creators the brand removed are never offered.

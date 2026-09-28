@@ -55,6 +55,10 @@ class Campaign(TimeStampedModel):
     content_deadline = models.DateField(null=True, blank=True)
     # Copied from settings at creation so later changes don't reprice live campaigns.
     margin_bps = models.PositiveIntegerField()
+    # Set when the brand runs a campaign again; creators who delivered then are matched first.
+    repeat_of = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="repeats"
+    )
     # Campaigns in sensitive categories need an ops sign-off before offers go out.
     ops_approved_at = models.DateTimeField(null=True, blank=True)
     ops_approved_by = models.ForeignKey(

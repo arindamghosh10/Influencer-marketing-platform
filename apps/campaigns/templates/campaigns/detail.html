@@ -7,8 +7,14 @@
     <h1 class="mt-1 text-2xl font-semibold">{{ campaign.title }}</h1>
     <p class="text-sm text-slate-500">{{ campaign.get_objective_display }} · {{ campaign.get_deliverable_display }} · budget {{ campaign.budget|inr }} + GST</p>
   </div>
-  {% if not locked %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-secondary">Edit settings</a>{% endif %}
+  <div class="flex flex-wrap gap-2">
+    {% if not locked %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-secondary">Edit settings</a>{% endif %}
+    {% if can_add_creators %}<a href="{% url 'campaigns:add_creators' campaign.pk %}" class="btn-secondary">Add creators</a>{% endif %}
+    {% if can_repeat and locked %}<form method="post" action="{% url 'campaigns:repeat' campaign.pk %}" onsubmit="return confirm('Start a new campaign with the same brief and settings?')">{% csrf_token %}<button class="btn-secondary" title="Same brief and settings; creators who delivered are picked first">Run again</button></form>{% endif %}
+  </div>
 </div>
+{% if pending_top_up %}<p class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">You picked more creators but haven't sent their offers yet. <a class="link" href="{% url 'campaigns:add_creators' campaign.pk %}">Finish adding creators</a></p>{% endif %}
+{% if campaign.repeat_of and campaign.status == "brief_confirmed" %}<p class="mb-4 text-sm text-slate-500">Repeat of <a class="link" href="{% url 'campaigns:detail' campaign.repeat_of.pk %}">{{ campaign.repeat_of.title }}</a>. Creators who delivered it are listed first when available.</p>{% endif %}
 
 <ol class="mb-6 flex flex-wrap gap-1 text-xs">
   {% for key, label in stages %}

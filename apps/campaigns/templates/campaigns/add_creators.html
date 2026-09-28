@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'campaigns:detail' campaign.pk %}" class="link text-sm">← {{ campaign.title }}</a>
+  <h1 class="mt-1 text-2xl font-semibold">Add creators</h1>
+  <p class="text-sm text-slate-500">Same brief, same terms. Creators already in this campaign are left out. The extra budget is added only when you send offers, and you pay for each creator once they accept.</p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <form method="post" class="card space-y-4">{% csrf_token %}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.count %}
+        {% include "partials/field.html" with field=form.budget_rupees %}
+      </div>
+      <button class="btn-{% if run %}secondary{% else %}primary{% endif %}">{% if run %}Search again{% else %}Find creators{% endif %}</button>
+    </form>
+
+    {% if run %}
+    <section class="card p-0">
+      <div class="px-5 py-4">
+        <h2 class="text-lg font-semibold">Recommended</h2>
+        <p class="text-xs text-slate-500">{{ run.eligible_count }} more creators fit your brief</p>
+      </div>
+      {% if run.shortage %}
+      <p class="mx-5 mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Fewer creators fit than you asked for. Try a larger budget, or add them later as more creators join.</p>
+      {% endif %}
+      {% for c in candidates %}
+        {% if c.role == "recommended" %}{% include "campaigns/partials/candidate_row.html" %}{% endif %}
+      {% empty %}<p class="px-5 pb-6 text-sm text-slate-500">No more creators fit this brief and budget right now.</p>{% endfor %}
+      {% if candidates %}
+      <details class="border-t border-slate-100" open>
+        <summary class="cursor-pointer px-5 py-3 text-sm font-medium">Other options</summary>
+        {% for c in candidates %}{% if c.role == "backup" %}{% include "campaigns/partials/candidate_row.html" %}{% endif %}{% endfor %}
+      </details>
+      {% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="space-y-4">
+    {% if run %}
+      {% include "campaigns/partials/summary.html" %}
+      {% for b in send_blockers %}<p class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{{ b }}</p>{% endfor %}
+      <form method="post" action="{% url 'campaigns:send_top_up' campaign.pk %}">{% csrf_token %}
+        <button class="btn-primary w-full" {% if send_blockers %}disabled{% endif %}>Send offers</button>
+      </form>
+      <form method="post" action="{% url 'campaigns:discard_top_up' campaign.pk %}">{% csrf_token %}<button class="link text-sm">Discard</button></form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

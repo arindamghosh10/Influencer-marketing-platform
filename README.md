@@ -29,6 +29,7 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 | Creator earnings: monthly chart, payment history with UTR, post performance, financial-year statement with quarterly TDS totals | ✅ |
 | Refunds: creator withdrawal or ops cancellation before approval refunds the brand with a GST credit note (own gap-free series); unpaid stale slots refunded automatically; billing shows net spend | ✅ |
 | Disputes: brand or creator reports a problem, payout held while open, ops evidence pack (agreements, consents with hashes, drafts, reviews, post checks, timeline), resolve as pay creator / full refund / split | ✅ |
+| Rebooking: "Run again" copies a campaign's settings and confirmed brief, with creators who delivered picked first; "Add creators" finds more creators for a running campaign (extra budget, excludes everyone already offered), billed on a separate invoice | ✅ |
 | Deployment (Oracle Cloud free tier) | Later |
 
 ## Run it locally
