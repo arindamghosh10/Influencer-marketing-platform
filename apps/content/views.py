@@ -149,7 +149,9 @@ def review_action(request, campaign_id, slot_id):
     slot = _brand_slot(request, campaign_id, slot_id)
     form = ReviewForm(request.POST)
     asset = services.latest_asset(slot)
-    if form.is_valid() and asset:
+    if not form.is_valid() or asset is None:
+        messages.error(request, "Choose Approve or Request changes.")
+    else:
         try:
             services.brand_review(
                 slot, asset, request.user, form.cleaned_data["decision"], form.cleaned_data["comment"]

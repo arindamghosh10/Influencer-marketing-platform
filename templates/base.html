@@ -7,8 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
+  {# Served from our own static files: no dependency on a third-party CDN being reachable. #}
+  <script src="{% static 'js/htmx-2.0.4.min.js' %}" defer></script>
+  <script src="{% static 'js/alpine-3.14.8.min.js' %}" defer></script>
   {% block head %}{% endblock %}
 </head>
 <body class="h-full text-slate-800" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

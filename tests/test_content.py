@@ -175,8 +175,11 @@ def test_brand_review_times_out_to_auto_approval(client, paid_slot):
 
 
 @pytest.mark.django_db
-def test_self_post_when_publish_consent_missing(client, paid_slot):
+def test_self_post_when_publish_consent_revoked(client, paid_slot):
     slot = paid_slot
+    # The creator switched off "publish on my behalf" in the consent centre.
+    client.force_login(slot.creator.user)
+    client.post(reverse("contracts:toggle_consent", args=["instagram_publish"]), {"grant": "0"})
     _submit(client, slot)
     services.brand_review(slot, Asset.objects.get(slot=slot), None, "approved")
     client.force_login(slot.creator.user)
@@ -186,7 +189,7 @@ def test_self_post_when_publish_consent_missing(client, paid_slot):
         {"publish_at": when, "auto_publish": "on", "confirm": "on"},
     )
     slot.refresh_from_db()
-    assert slot.status == Slot.Status.SELF_POST  # no publish consent → creator posts
+    assert slot.status == Slot.Status.SELF_POST  # consent withdrawn → creator posts
     client.post(reverse("content:self_post", args=[slot.pk]), {"permalink": "https://example.com/x"})
     slot.refresh_from_db()
     assert slot.status == Slot.Status.SELF_POST

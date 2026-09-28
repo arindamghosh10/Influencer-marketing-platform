@@ -14,10 +14,10 @@
   <div class="flex shrink-0 items-center gap-3">
     <span class="text-right"><span class="block text-lg font-semibold">{{ c.price|inr }}</span><span class="text-xs text-slate-500">+ GST</span></span>
     {% if editable %}
-    <button class="{% if c.selected %}btn-secondary{% else %}btn-primary{% endif %}"
-            hx-post="{% url 'campaigns:toggle_candidate' campaign.pk c.id %}" hx-target="#cand-{{ c.id }}" hx-swap="outerHTML">
-      {% if c.selected %}Remove{% else %}Add{% endif %}
-    </button>
+    <form method="post" action="{% url 'campaigns:toggle_candidate' campaign.pk c.id %}"
+          hx-post="{% url 'campaigns:toggle_candidate' campaign.pk c.id %}" hx-target="#cand-{{ c.id }}" hx-swap="outerHTML">{% csrf_token %}
+      <button class="{% if c.selected %}btn-secondary{% else %}btn-primary{% endif %}">{% if c.selected %}Remove{% else %}Add{% endif %}</button>
+    </form>
     {% elif c.selected %}<span class="badge-green">Selected</span>{% endif %}
   </div>
 </div>

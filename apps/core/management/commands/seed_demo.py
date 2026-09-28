@@ -6,18 +6,28 @@ python manage.py seed_demo --creators 150
 
 import random
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.brands.models import BrandProfile
+from apps.contracts.models import Agreement, AgreementKind, ConsentEvent, ConsentScope
+from apps.contracts.services import render_agreement
 from apps.creators.models import CreatorProfile
 from apps.creators.services import authenticity_score, suggested_rate_band, text_keywords
 from apps.integrations.instagram.mock import MockInstagram
 from apps.niches.models import Niche, SensitiveCategory
 
 PASSWORD = "demo-pass-123"
+DEMO_CREATOR_CONSENTS = [
+    ConsentScope.TERMS,
+    ConsentScope.DATA_PROCESSING,
+    ConsentScope.INSTAGRAM_READ,
+    ConsentScope.INSTAGRAM_PUBLISH,
+    ConsentScope.AI_SCRIPT_HELP,
+]
 FIRST = [
     "Aarav",
     "Diya",
@@ -140,6 +150,35 @@ class Command(BaseCommand):
                 },
             )
             creator.niches.set(rng.sample(siblings, min(len(siblings), rng.randint(0, 2))))
+            # Demo creators skip onboarding, so record the agreement and consents it would create.
+            if not Agreement.objects.filter(user=user, kind=AgreementKind.CREATOR_PLATFORM).exists():
+                version, body, sha = render_agreement(
+                    AgreementKind.CREATOR_PLATFORM,
+                    {
+                        "platform_name": settings.PLATFORM_NAME,
+                        "legal_name": creator.legal_name,
+                        "email": user.email,
+                        "ig_username": handle,
+                        "today": "demo data",
+                        "verification_days": settings.VERIFICATION_DAYS,
+                        "min_live_days": settings.MIN_LIVE_DAYS,
+                    },
+                )
+                Agreement.objects.create(
+                    user=user,
+                    kind=AgreementKind.CREATOR_PLATFORM,
+                    version=version,
+                    body=body,
+                    sha256=sha,
+                    signed_name=creator.legal_name,
+                    signed_at=timezone.now(),
+                    otp_verified=False,
+                )
+            if not ConsentEvent.objects.filter(user=user, campaign__isnull=True).exists():
+                ConsentEvent.objects.bulk_create(
+                    ConsentEvent(user=user, scope=scope, action=ConsentEvent.Action.GRANTED)
+                    for scope in DEMO_CREATOR_CONSENTS
+                )
             low, high = suggested_rate_band(creator)
             creator.rate_reel = int(round(rng.uniform(low, high), -4))
             creator.rate_story = int(round(creator.rate_reel * 0.4, -4))

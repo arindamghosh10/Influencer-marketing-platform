@@ -84,9 +84,10 @@ def campaign_results(campaign):
     """Totals from the latest metrics snapshot of each published post (brand-facing)."""
     from apps.content.models import Post
 
-    posts = Post.objects.filter(slot__campaign=campaign, published_at__isnull=False).prefetch_related(
-        "snapshots"
-    )
+    posts = Post.objects.filter(
+        slot__campaign=campaign,
+        status__in=[Post.Status.LIVE, Post.Status.VERIFIED, Post.Status.MISSING],
+    ).prefetch_related("snapshots")
     totals = {"posts": 0, "reach": 0, "views": 0, "engagements": 0, "spend": 0}
     for post in posts:
         totals["posts"] += 1
@@ -340,6 +341,8 @@ def toggle_candidate(request, pk, candidate_id):
     if campaign.status == Campaign.Status.BRIEF_CONFIRMED:
         mc.selected = not mc.selected
         mc.save(update_fields=["selected"])
+    if not request.htmx:  # plain form post (JavaScript unavailable): reload the page
+        return redirect("campaigns:detail", pk=pk)
     candidate = next(c for c in brand_candidates(run) if c.id == mc.pk)
     context = {
         "c": candidate,

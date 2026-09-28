@@ -30,6 +30,7 @@ ACTIVE_LABELS = {
     "self_post": "Post it and share the link",
     "live": "Live: in verification",
     "on_hold": "Post missing: please restore",
+    "verified": "Verified: payout released",
 }
 NEEDS_CREATOR_ACTION = {"confirmed", "changes_requested", "approved", "self_post", "on_hold"}
 
@@ -62,7 +63,9 @@ def dashboard(request):
         .order_by("expires_at")
     )
     active = (
-        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, *Slot.IN_PROGRESS])
+        Slot.objects.filter(
+            creator=creator, status__in=[Slot.Status.ACCEPTED, *Slot.IN_PROGRESS, Slot.Status.VERIFIED]
+        )
         .select_related("campaign__brand")
         .order_by("-accepted_at")
     )
@@ -87,6 +90,7 @@ def dashboard(request):
             for s in active
         ],
         "earnings": creator_earnings(creator),
+        "active_count": sum(1 for s in active if s.status != Slot.Status.VERIFIED),
     }
     return render(request, "creators/dashboard.html", context)
 
