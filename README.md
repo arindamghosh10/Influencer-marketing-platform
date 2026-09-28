@@ -25,7 +25,9 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 | Content: creator workspace with AI script helper, draft upload with automated checks (ad disclosure, forbidden phrases, risky claims, file type), brand review with 2 revision rounds and 72h auto-approval | ✅ |
 | Publishing: creator's final OK on the exact file (consent stored with its SHA-256), scheduled auto-publish via Instagram API, self-post fallback with link verification | ✅ |
 | Verification: daily checks for 7 days, payout on hold if the post disappears or loses its disclosure, weekly monitoring until the minimum live period ends; campaign results (reach, views, engagement rate, CPM) | ✅ |
-| Full brand/creator dashboards with charts and reports | Next |
+| Dashboards: brand home (spend, reach, views, ER, CPM, views chart, upcoming posts), per-creator results and chart, printable campaign report, content library with usage-rights expiry, billing, weekly email digest | ✅ |
+| Creator earnings: monthly chart, payment history with UTR, post performance, financial-year statement with quarterly TDS totals | ✅ |
+| Deployment (Oracle Cloud free tier) | Later |
 
 ## Run it locally
 
@@ -61,7 +63,7 @@ Signing codes and emails are printed in the terminal (and shown on screen in deb
 
 **Tips**
 - Start fresh: stop the server, delete `db.sqlite3` and the `media/` folder, run `devserver` again.
-- The stylesheet is included. If you change templates, `devserver` rebuilds it automatically (needs internet the first time to download the Tailwind tool).
+- The stylesheet is included. If you change templates, run `uv run python manage.py devserver --build-css` to rebuild it (downloads the Tailwind tool, about 145 MB, the first time).
 - Use PostgreSQL instead: set `DATABASE_URL` in `.env` (see `.env.example`), or run everything with `docker compose up --build`.
 - Real AI briefs: set `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env` (free key from https://aistudio.google.com).
 

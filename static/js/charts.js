@@ -55,6 +55,11 @@
     },
   };
 
+  function isolated(values, i) {
+    const has = (j) => j >= 0 && j < values.length && values[j] !== null && values[j] !== undefined;
+    return has(i) && !has(i - 1) && !has(i + 1);
+  }
+
   function render(canvas) {
     const data = JSON.parse(document.getElementById(canvas.dataset.source).textContent);
     const kind = canvas.dataset.kind || "line";
@@ -67,7 +72,8 @@
       borderColor: SERIES[i],
       backgroundColor: SERIES[i],
       borderWidth: kind === "line" ? 2 : 0,
-      pointRadius: 0,
+      // A lone value (e.g. a post's first day) has no line to draw, so show it as a dot.
+      pointRadius: (ctx) => (kind === "line" && isolated(ctx.dataset.data, ctx.dataIndex) ? 4 : 0),
       pointHoverRadius: 5,
       pointHitRadius: 12,
       pointHoverBorderColor: INK.surface,

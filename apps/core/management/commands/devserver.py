@@ -23,6 +23,11 @@ class Command(BaseCommand):
         parser.add_argument("addrport", nargs="?", default="127.0.0.1:8000")
         parser.add_argument("--no-demo", action="store_true", help="Don't load demo data")
         parser.add_argument("--interval", type=int, default=60, help="Scheduler interval in seconds")
+        parser.add_argument(
+            "--build-css",
+            action="store_true",
+            help="Rebuild the stylesheet after changing templates (downloads the Tailwind tool once)",
+        )
 
     def handle(self, *args, **options):
         # Django's auto-reloader runs this command twice: once as a watcher and once (RUN_MAIN)
@@ -41,15 +46,17 @@ class Command(BaseCommand):
         if not options["no_demo"] and not get_user_model().objects.exists():
             self.stdout.write("Loading demo data (first run only)…")
             call_command("seed_demo", verbosity=0)
-        try:
-            call_command("tailwind", "build", verbosity=0)
-        except Exception as exc:  # offline or blocked: the committed stylesheet still works
-            self.stdout.write(
-                self.style.WARNING(f"Skipped stylesheet build ({exc}); using the included one.")
-            )
+        if options["build_css"]:
+            try:
+                call_command("tailwind", "build", verbosity=0)
+            except Exception as exc:  # offline or blocked: the committed stylesheet still works
+                self.stdout.write(
+                    self.style.WARNING(f"Stylesheet build failed ({exc}); using the included one.")
+                )
+        address = options["addrport"] if ":" in options["addrport"] else f"127.0.0.1:{options['addrport']}"
         self.stdout.write(
             self.style.SUCCESS(
-                "\nReady! Open http://127.0.0.1:8000\n"
+                f"\nReady! Open http://{address}\n"
                 "  Brand:   brand@demo.local\n"
                 "  Creator: creator000@demo.local\n"
                 "  Ops:     ops@demo.local   (admin at /admin/)\n"
