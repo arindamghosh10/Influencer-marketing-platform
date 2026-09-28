@@ -72,7 +72,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgres://app:app@localhost:5432/influencer"),
+    # SQLite for local development (no database server needed); PostgreSQL in production.
+    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 

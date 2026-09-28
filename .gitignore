@@ -4,7 +4,7 @@ __pycache__/
 .env
 media/
 staticfiles/
-static/css/tailwind.css
+
 .django_tailwind_cli/
 .pytest_cache/
 .ruff_cache/

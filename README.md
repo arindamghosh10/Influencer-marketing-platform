@@ -29,32 +29,46 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 
 ## Run it locally
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), PostgreSQL 16, Redis (only needed for background jobs).
+You need **uv** (it installs the right Python for you). Nothing else: no database server, no Redis, no Node.js.
+
+**1. Install uv** (once)
+
+- macOS / Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+
+**2. Get the code and start it**
 
 ```bash
-cp .env.example .env                 # set DEBUG=true for local use
-createuser app -P && createdb influencer -O app   # or use docker compose (below)
+git clone https://github.com/arindamghosh10/Influencer-marketing-platform.git
+cd Influencer-marketing-platform
+git checkout claude/vigilant-hamilton-l0fhds
+cp .env.example .env          # Windows: copy .env.example .env
 uv sync
-uv run python manage.py migrate      # also loads the niche taxonomy
-uv run python manage.py seed_demo    # demo brand, ops user and 80 creators
-uv run python manage.py tailwind build
-uv run python manage.py runserver
+uv run python manage.py devserver
 ```
 
-Open http://127.0.0.1:8000 and log in with one of the demo accounts (password `demo-pass-123`):
+`devserver` creates the local database (`db.sqlite3`), loads demo data the first time, starts the background scheduler (offer expiry, review auto-approval, publishing, post verification, weekly reports) and the web server.
 
-- `brand@demo.local`: create a campaign, confirm the brief, pick creators
-- `creator000@demo.local`: an approved creator
-- `ops@demo.local`: ops overview at `/ops/`, admin at `/admin/`
+**3. Open http://127.0.0.1:8000** and log in (password `demo-pass-123` for all):
 
-Or sign up as a new creator to walk through onboarding. In `DEBUG` mode the signing code is shown on screen and printed in the server log.
+| Account | What to try |
+|---|---|
+| `brand@demo.local` | New campaign → confirm brief → pick creators → send offers → pay (test mode) → review drafts → see results, content library, billing |
+| `creator000@demo.local` | Offers, campaign workspace, earnings and FY statement. Or sign up as a new creator to try onboarding |
+| `ops@demo.local` | `/ops/` (review queues, "Run scheduled jobs now") and `/admin/` (approve users, mark payouts paid) |
 
-With Docker: `cp .env.example .env && docker compose up --build`.
+Signing codes and emails are printed in the terminal (and shown on screen in debug mode). To see offers from the brand's campaign, log in as the creator named on the campaign page; the ops admin (`/admin/` → Users) shows every creator's email.
+
+**Tips**
+- Start fresh: stop the server, delete `db.sqlite3` and the `media/` folder, run `devserver` again.
+- The stylesheet is included. If you change templates, `devserver` rebuilds it automatically (needs internet the first time to download the Tailwind tool).
+- Use PostgreSQL instead: set `DATABASE_URL` in `.env` (see `.env.example`), or run everything with `docker compose up --build`.
+- Real AI briefs: set `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env` (free key from https://aistudio.google.com).
 
 ## Tests and checks
 
 ```bash
-uv run pytest            # unit + end-to-end flow tests (needs Postgres)
+uv run pytest            # unit + end-to-end flow tests (SQLite by default; set DATABASE_URL for Postgres)
 uv run ruff check . && uv run ruff format --check .
 ```
 
