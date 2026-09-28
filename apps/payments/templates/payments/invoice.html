@@ -34,10 +34,10 @@
         {% endfor %}
       </tbody>
       <tfoot>
-        <tr><td colspan="2" class="pt-3 text-right">Taxable value</td><td class="pt-3 text-right">{{ order.subtotal|inr }}</td></tr>
+        <tr><td colspan="2" class="pt-3 pr-4 text-right">Taxable value</td><td class="pt-3 text-right">{{ order.subtotal|inr }}</td></tr>
         {% if order.igst %}<tr><td colspan="2" class="text-right">IGST @ 18%</td><td class="text-right">{{ order.igst|inr }}</td></tr>
         {% else %}<tr><td colspan="2" class="text-right">CGST @ 9%</td><td class="text-right">{{ order.cgst|inr }}</td></tr><tr><td colspan="2" class="text-right">SGST @ 9%</td><td class="text-right">{{ order.sgst|inr }}</td></tr>{% endif %}
-        <tr class="text-base font-semibold"><td colspan="2" class="pt-2 text-right">Total</td><td class="pt-2 text-right">{{ order.total|inr }}</td></tr>
+        <tr class="text-base font-semibold"><td colspan="2" class="pt-2 pr-4 text-right">Total</td><td class="pt-2 text-right">{{ order.total|inr }}</td></tr>
       </tfoot>
     </table>
     <p class="text-xs text-slate-500">Paid on {{ order.paid_at|date:"d M Y, H:i" }} · payment ref {{ order.provider_payment_id }}. This is a computer-generated invoice.</p>

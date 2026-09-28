@@ -132,6 +132,9 @@ class Command(BaseCommand):
                     "reliability_score": round(rng.uniform(0.55, 0.98), 2),
                     "red_lines": rng.sample(SensitiveCategory.values, rng.randint(0, 3)),
                     "legal_name": f"{user.first_name} {user.last_name}",
+                    # Individual PAN (4th letter P) so demo payouts use the individual TDS rate.
+                    "pan": f"ABCP{user.last_name[0]}{1000 + i}K",
+                    "pan_last4": f"{1000 + i}K"[-4:],
                     "kyc_status": CreatorProfile.KycStatus.VERIFIED,
                     "status": CreatorProfile.Status.APPROVED,
                 },

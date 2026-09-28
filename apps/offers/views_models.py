@@ -45,7 +45,9 @@ class CreatorOfferView:
         return cls(
             id=offer.pk,
             status=offer.status,
-            status_label=offer.get_status_display(),
+            status_label="Waiting for your reply"
+            if offer.status == offer.Status.PENDING
+            else offer.get_status_display(),
             brand_name=campaign.brand.company_name,
             brand_verified=bool(campaign.brand.domain_verified_at),
             campaign_title=campaign.title,
