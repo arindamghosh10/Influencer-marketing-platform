@@ -40,14 +40,29 @@ You need **uv** (it installs the right Python for you). Nothing else: no databas
 
 **2. Get the code and start it**
 
+Windows (PowerShell):
+
+```powershell
+git clone https://github.com/arindamghosh10/Influencer-marketing-platform.git
+cd Influencer-marketing-platform
+git checkout claude/vigilant-hamilton-l0fhds
+Copy-Item .env.example .env
+uv sync
+uv run python manage.py devserver
+```
+
+macOS / Linux:
+
 ```bash
 git clone https://github.com/arindamghosh10/Influencer-marketing-platform.git
 cd Influencer-marketing-platform
 git checkout claude/vigilant-hamilton-l0fhds
-cp .env.example .env          # Windows: copy .env.example .env
+cp .env.example .env
 uv sync
 uv run python manage.py devserver
 ```
+
+After installing uv, close and reopen the terminal so the `uv` command is found.
 
 `devserver` creates the local database (`db.sqlite3`), loads demo data the first time, starts the background scheduler (offer expiry, review auto-approval, publishing, post verification, weekly reports) and the web server.
 
