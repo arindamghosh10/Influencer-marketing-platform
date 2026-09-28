@@ -1,0 +1,17 @@
+{% extends "creators/onboarding/_layout.html" %}
+{% block step %}
+<h2 class="mb-1 font-semibold">Creator agreement</h2>
+{% if signed %}
+  <p class="mb-4 text-sm text-slate-600">You've signed the current agreement. You can view it any time in your <a class="link" href="{% url 'contracts:consents' %}">consent centre</a>.</p>
+  {% if creator.status == "draft" or creator.status == "rejected" %}
+  <a href="{% url 'creators:submit' %}" class="btn-primary">Submit profile for review</a>
+  {% else %}<p class="text-sm">Profile status: <strong>{{ creator.get_status_display }}</strong></p>{% endif %}
+{% else %}
+  <ul class="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
+    <li>Nothing is ever posted on your account without you approving the exact video and caption.</li>
+    <li>You're paid after your post has been live for 7 days, directly to your bank.</li>
+    <li>Every campaign has its own short agreement showing your fee and how the brand can use the content.</li>
+  </ul>
+  <form method="post">{% csrf_token %}<button class="btn-primary">Read and sign the agreement</button></form>
+{% endif %}
+{% endblock %}

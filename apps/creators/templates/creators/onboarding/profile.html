@@ -1,0 +1,22 @@
+{% extends "creators/onboarding/_layout.html" %}
+{% block step %}
+<form method="post" class="space-y-4">{% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/field.html" with field=form.display_name %}
+    {% include "partials/field.html" with field=form.gender %}
+    {% include "partials/field.html" with field=form.city %}
+    {% include "partials/field.html" with field=form.languages_csv %}
+  </div>
+  {% include "partials/field.html" with field=form.bio %}
+  {% include "partials/field.html" with field=form.primary_niche %}
+  <div>
+    <p class="label">{{ form.niches.label }}</p>
+    <div class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-slate-200 p-3 text-sm sm:grid-cols-2">
+      {% for cb in form.niches %}<label class="flex items-center gap-2">{{ cb.tag }} {{ cb.choice_label }}</label>{% endfor %}
+    </div>
+    {% for e in form.niches.errors %}<p class="error">{{ e }}</p>{% endfor %}
+  </div>
+  <button class="btn-primary">Save and continue</button>
+</form>
+{% endblock %}

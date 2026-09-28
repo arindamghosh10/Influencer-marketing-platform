@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'contracts:consents' %}" class="link text-sm">← Consent centre</a>
+  <article class="card mt-3 space-y-3 text-sm leading-relaxed [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mt-4 [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5">{{ agreement.body|safe }}</article>
+  <div class="card mt-4 text-xs text-slate-500 space-y-1">
+    <p>Signed by <strong>{{ agreement.signed_name }}</strong> on {{ agreement.signed_at|date:"d M Y, H:i" }} (email code verified).</p>
+    <p>IP {{ agreement.ip_address }} · SHA-256 {{ agreement.sha256 }}</p>
+  </div>
+</div>
+{% endblock %}

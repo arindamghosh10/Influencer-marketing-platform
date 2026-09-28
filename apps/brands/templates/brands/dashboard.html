@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold">{{ brand.company_name }}</h1>
+    <p class="text-sm text-slate-500">Account:
+      {% if brand.status == "approved" %}<span class="badge-green">Approved</span>{% elif brand.status == "pending_review" %}<span class="badge-amber">In review</span>{% elif brand.status == "rejected" %}<span class="badge-red">Changes needed</span>{% else %}<span class="badge-gray">Setting up</span>{% endif %}
+      {% if brand.domain_verified_at %}<span class="badge-indigo">✓ {{ brand.domain }}</span>{% endif %}
+    </p>
+  </div>
+  <a href="{% url 'campaigns:create' %}" class="btn-primary">+ New campaign</a>
+</div>
+
+{% if not setup_done %}
+<div class="card mb-6 border-brand-200 bg-brand-50">
+  <p class="font-semibold text-brand-700">Action required: finish setup</p>
+  <ul class="mt-2 space-y-1 text-sm">{% for key, label, done in steps %}<li>{% if done %}✓{% else %}○{% endif %} {{ label }}</li>{% endfor %}</ul>
+  <a class="btn-primary mt-3" href="{% url 'brands:agreement' %}">Continue</a>
+</div>
+{% endif %}
+
+{% if actions %}
+<div class="card mb-6">
+  <h2 class="mb-2 font-semibold">Waiting on you</h2>
+  {% for c, text in actions %}
+  <div class="flex items-center justify-between border-t border-slate-100 py-2 text-sm"><span><strong>{{ c.title }}</strong> · {{ text }}</span><a class="link" href="{% url 'campaigns:detail' c.pk %}">Open</a></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="mb-6 grid gap-4 sm:grid-cols-4">
+  <div class="stat"><p class="stat-label">Campaigns</p><p class="stat-value">{{ campaigns|length }}</p></div>
+  <div class="stat"><p class="stat-label">Total spend</p><p class="stat-value">₹0</p></div>
+  <div class="stat"><p class="stat-label">Posts live</p><p class="stat-value">0</p></div>
+  <div class="stat"><p class="stat-label">Total reach</p><p class="stat-value">—</p></div>
+</div>
+
+<div class="card p-0">
+  <div class="border-b border-slate-100 px-5 py-3 font-semibold">Campaigns</div>
+  {% for c in campaigns %}
+  <a href="{% url 'campaigns:detail' c.pk %}" class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3 text-sm hover:bg-slate-50">
+    <span class="font-medium">{{ c.title }}</span>
+    <span class="flex items-center gap-3"><span class="text-slate-500">Budget {{ c.budget|inr }}</span><span class="badge-indigo">{{ c.get_status_display }}</span></span>
+  </a>
+  {% empty %}
+  <div class="px-5 py-10 text-center text-sm text-slate-500">No campaigns yet. <a class="link" href="{% url 'campaigns:create' %}">Create your first one</a>: all it takes is a product link and a budget.</div>
+  {% endfor %}
+</div>
+{% endblock %}

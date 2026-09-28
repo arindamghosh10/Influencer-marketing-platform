@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4 text-2xl font-semibold">Ops overview</h1>
+<div class="mb-6 grid gap-4 sm:grid-cols-3">
+  <div class="stat"><p class="stat-label">Approved creators</p><p class="stat-value">{{ counts.creators_approved }}</p></div>
+  <div class="stat"><p class="stat-label">Approved brands</p><p class="stat-value">{{ counts.brands_approved }}</p></div>
+  <div class="stat"><p class="stat-label">Active campaigns</p><p class="stat-value">{{ counts.campaigns }}</p></div>
+</div>
+<div class="grid gap-6 lg:grid-cols-2">
+  <div class="card">
+    <h2 class="mb-3 font-semibold">Creators waiting for review ({{ creators_pending|length }})</h2>
+    {% for c in creators_pending %}
+      <div class="flex items-center justify-between border-t border-slate-100 py-2 text-sm">
+        <span>{{ c.display_name }} · @{{ c.ig_username }} · {{ c.primary_niche|default:"—" }}</span>
+        <a class="link" href="{% url 'admin:creators_creatorprofile_change' c.pk %}">Review</a>
+      </div>
+    {% empty %}<p class="text-sm text-slate-500">Nothing waiting.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2 class="mb-3 font-semibold">Brands waiting for review ({{ brands_pending|length }})</h2>
+    {% for b in brands_pending %}
+      <div class="flex items-center justify-between border-t border-slate-100 py-2 text-sm">
+        <span>{{ b.company_name }} · {{ b.domain|default:"no website" }}</span>
+        <a class="link" href="{% url 'admin:brands_brandprofile_change' b.pk %}">Review</a>
+      </div>
+    {% empty %}<p class="text-sm text-slate-500">Nothing waiting.</p>{% endfor %}
+  </div>
+</div>
+<div class="card mt-6">
+  <h2 class="mb-3 font-semibold">Recent activity</h2>
+  {% for e in events %}
+  <div class="flex justify-between border-t border-slate-100 py-2 text-sm"><span>{{ e.message }}</span><span class="text-slate-400">{{ e.created_at|date:"d M, H:i" }}</span></div>
+  {% endfor %}
+</div>
+{% endblock %}

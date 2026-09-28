@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <h1 class="mb-4 text-2xl font-semibold">Set up your creator profile</h1>
+  <ol class="mb-6 flex gap-2 overflow-x-auto pb-1 text-xs">
+    {% for key, label, done in steps %}
+    <li class="shrink-0">
+      <a href="{% url 'creators:onboarding_step' key %}" class="block rounded-lg border px-2 py-2 text-center {% if key == step %}border-brand-500 bg-brand-50 font-semibold text-brand-700{% elif done %}border-emerald-200 bg-emerald-50 text-emerald-800{% else %}border-slate-200 bg-white text-slate-500{% endif %}">
+        {% if done %}✓ {% endif %}{{ label }}
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="card">{% block step %}{% endblock %}</div>
+</div>
+{% endblock %}

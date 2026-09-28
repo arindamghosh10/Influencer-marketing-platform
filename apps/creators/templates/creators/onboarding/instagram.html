@@ -1,0 +1,25 @@
+{% extends "creators/onboarding/_layout.html" %}
+{% load platform %}
+{% block step %}
+<h2 class="mb-1 font-semibold">Connect your Instagram</h2>
+<p class="mb-4 text-sm text-slate-600">We read your follower count, recent posts and audience insights (age, gender, cities) to match you with the right brands. We never see your password and never post anything without your approval.</p>
+{% if creator.ig_connected %}
+  <div class="mb-4 grid gap-3 sm:grid-cols-4">
+    <div class="stat"><p class="stat-label">Account</p><p class="mt-1 font-semibold">@{{ creator.ig_username }}</p></div>
+    <div class="stat"><p class="stat-label">Followers</p><p class="stat-value">{{ creator.followers|compact }}</p></div>
+    <div class="stat"><p class="stat-label">Engagement</p><p class="stat-value">{{ creator.engagement_rate|pct }}</p></div>
+    <div class="stat"><p class="stat-label">Avg reach</p><p class="stat-value">{{ creator.avg_reach|compact }}</p></div>
+  </div>
+{% endif %}
+{% if uses_oauth %}
+  <p class="mb-3 text-sm text-slate-600">Your account must be a <strong>Creator</strong> or <strong>Business</strong> account (Instagram → Settings → Account type; it's free and takes a minute).</p>
+  <a href="{{ oauth_url }}" class="btn-primary">{% if creator.ig_connected %}Reconnect{% else %}Connect{% endif %} Instagram</a>
+{% else %}
+  <div class="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Demo mode: Instagram isn't connected to Meta yet, so realistic sample stats are generated from the username.</div>
+  <form method="post" class="flex flex-wrap items-end gap-3">{% csrf_token %}
+    <div class="grow">{% include "partials/field.html" with field=form.handle %}</div>
+    <button class="btn-primary">{% if creator.ig_connected %}Reconnect{% else %}Connect{% endif %}</button>
+  </form>
+{% endif %}
+{% if creator.ig_connected %}<a href="{% url 'creators:onboarding_step' 'rates' %}" class="btn-secondary mt-4">Continue</a>{% endif %}
+{% endblock %}

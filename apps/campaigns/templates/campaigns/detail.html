@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <a href="{% url 'brands:dashboard' %}" class="link text-sm">← Dashboard</a>
+    <h1 class="mt-1 text-2xl font-semibold">{{ campaign.title }}</h1>
+    <p class="text-sm text-slate-500">{{ campaign.get_objective_display }} · {{ campaign.get_deliverable_display }} · budget {{ campaign.budget|inr }} + GST</p>
+  </div>
+  {% if campaign.status != "shortlisted" %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-secondary">Edit settings</a>{% endif %}
+</div>
+
+<ol class="mb-6 flex flex-wrap gap-1 text-xs">
+  {% for key, label in stages %}
+  <li class="rounded-full px-3 py-1 {% if key == stage %}bg-brand-600 text-white{% else %}bg-slate-100 text-slate-500{% endif %}">{{ forloop.counter }}. {{ label }}</li>
+  {% endfor %}
+</ol>
+
+{# What happens next #}
+<div class="card mb-6 border-brand-200 bg-brand-50 text-sm">
+  <p class="font-semibold text-brand-700">What happens next</p>
+  {% if campaign.status == "brief_ready" %}<p class="mt-1">Check what we understood about your product below, fix anything that's off, then confirm. Creators only ever see the confirmed brief.</p>
+  {% elif campaign.status == "brief_confirmed" %}<p class="mt-1">Review the recommended creators. Add or remove anyone, then confirm your selection. Backups are listed below in case someone declines.</p>
+  {% elif campaign.status == "shortlisted" %}<p class="mt-1">Your selection is saved. Next we send offers to these creators{% if campaign.brand.status != "approved" %}, as soon as your brand account is approved{% endif %}. Each creator has 48 hours to accept; if someone declines, we offer the slot to your backup.</p>
+  {% else %}<p class="mt-1">We're reading your product page.</p>{% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    {% if brief %}
+    <section class="card">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-lg font-semibold">Product brief <span class="text-sm font-normal text-slate-500">v{{ brief.version }} · {{ brief.get_source_display }}</span></h2>
+        {% if brief.confirmed_at %}<span class="badge-green">Confirmed {{ brief.confirmed_at|date:"d M" }}</span>{% else %}<span class="badge-amber">Needs your review</span>{% endif %}
+      </div>
+      {% if brief.fetch_error %}<p class="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">Couldn't read the product page: {{ brief.fetch_error }}. Built from your notes instead.</p>{% endif %}
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate-500">Product</dt><dd class="font-medium">{{ brief.data.product_name }}</dd></div>
+        <div><dt class="text-slate-500">Brand</dt><dd>{{ brief.data.brand_name|default:"—" }}</dd></div>
+        <div><dt class="text-slate-500">Category</dt><dd>{{ brief.data.category|default:"—" }}</dd></div>
+        <div><dt class="text-slate-500">Price</dt><dd>{% if brief.data.price_inr %}₹{{ brief.data.price_inr|floatformat:0 }}{% else %}—{% endif %}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-slate-500">Summary</dt><dd>{{ brief.data.summary|default:"—" }}</dd></div>
+        {% if brief.data.key_features %}<div><dt class="text-slate-500">Features</dt><dd><ul class="list-disc pl-5">{% for f in brief.data.key_features %}<li>{{ f }}</li>{% endfor %}</ul></dd></div>{% endif %}
+        {% if brief.data.benefits %}<div><dt class="text-slate-500">Benefits</dt><dd><ul class="list-disc pl-5">{% for f in brief.data.benefits %}<li>{{ f }}</li>{% endfor %}</ul></dd></div>{% endif %}
+        <div><dt class="text-slate-500">Target audience</dt><dd>{{ brief.data.target_audience|default:"—" }}</dd></div>
+        <div><dt class="text-slate-500">Niches</dt><dd>{% for n in niche_names %}<span class="badge-indigo mr-1">{{ n }}</span>{% empty %}<span class="text-rose-600">None: please pick one</span>{% endfor %}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-slate-500">Topics</dt><dd class="text-slate-600">{{ brief.data.keywords|join:", "|default:"—" }}</dd></div>
+      </dl>
+      {% if restricted_label %}
+      <div class="mt-4 rounded-lg border {% if blockers %}border-rose-200 bg-rose-50 text-rose-800{% else %}border-amber-200 bg-amber-50 text-amber-800{% endif %} px-3 py-2 text-sm">Sensitive category detected: <strong>{{ restricted_label }}</strong>. {% if needs_review %}Our team reviews these campaigns (and may ask for licences or proof of claims) before offers go out. Creators who opted out of this category won't be matched.{% endif %}</div>
+      {% endif %}
+      {% if brief.data.risky_claims %}
+      <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p class="font-medium">Claims that need proof under advertising rules (ASCI):</p>
+        <ul class="mt-1 list-disc pl-5">{% for c in brief.data.risky_claims %}<li>{{ c }}</li>{% endfor %}</ul>
+        <p class="mt-1 text-xs">Creators will be told not to make these claims unless you provide substantiation.</p>
+      </div>
+      {% endif %}
+      {% for b in blockers %}<p class="mt-3 text-sm text-rose-600">{{ b }}</p>{% endfor %}
+      {% if not brief.confirmed_at %}
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <form method="post" action="{% url 'campaigns:confirm_brief' campaign.pk %}" class="flex flex-wrap items-center gap-3">{% csrf_token %}
+          {% if brief.data.risky_claims %}<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="claims_ack" value="1" class="h-4 w-4"> I understand the flagged claims</label>{% endif %}
+          <button class="btn-primary" {% if blockers %}disabled{% endif %}>Looks right: confirm and find creators</button>
+        </form>
+        <a href="{% url 'campaigns:edit_brief' campaign.pk %}" class="btn-secondary">Edit brief</a>
+        {% if campaign.product_url %}<form method="post" action="{% url 'campaigns:regenerate_brief' campaign.pk %}">{% csrf_token %}<button class="btn-secondary">Re-read product page</button></form>{% endif %}
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if run %}
+    <section class="card p-0">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
+        <div>
+          <h2 class="text-lg font-semibold">Recommended creators</h2>
+          <p class="text-xs text-slate-500">{{ run.eligible_count }} creators fit your brief · matched {{ run.created_at|timesince }} ago</p>
+        </div>
+        {% if campaign.status == "brief_confirmed" %}<form method="post" action="{% url 'campaigns:rematch' campaign.pk %}">{% csrf_token %}<button class="btn-secondary">Refresh matches</button></form>{% endif %}
+      </div>
+      {% if run.shortage %}
+      <div class="mx-5 mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Not many creators fit this brief yet{% if campaign.creators_wanted %} (you asked for {{ campaign.creators_wanted }}){% endif %}. We only show strong matches. We're onboarding more creators in this niche, or you can widen the audience, cities or languages.
+        {% if run.excluded_counts %}<details class="mt-1 text-xs"><summary class="cursor-pointer">Why creators were left out</summary><ul class="mt-1 list-disc pl-5">{% for reason, n in run.excluded_counts.items %}<li>{{ reason }}: {{ n }}</li>{% endfor %}</ul></details>{% endif %}
+      </div>
+      {% endif %}
+      {% for c in candidates %}
+        {% if c.role == "recommended" %}{% include "campaigns/partials/candidate_row.html" with editable=editable %}{% endif %}
+      {% empty %}<p class="px-5 pb-6 text-sm text-slate-500">No creators match yet.</p>{% endfor %}
+      {% if candidates %}
+      <details class="border-t border-slate-100" {% if campaign.status == "brief_confirmed" %}open{% endif %}>
+        <summary class="cursor-pointer px-5 py-3 text-sm font-medium">Backups</summary>
+        {% for c in candidates %}{% if c.role == "backup" %}{% include "campaigns/partials/candidate_row.html" with editable=editable %}{% endif %}{% endfor %}
+      </details>
+      {% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="space-y-6">
+    {% if summary %}
+      {% include "campaigns/partials/summary.html" %}
+      {% if campaign.status == "brief_confirmed" %}
+      <form method="post" action="{% url 'campaigns:confirm_selection' campaign.pk %}">{% csrf_token %}<button class="btn-primary w-full">Confirm selection</button></form>
+      {% endif %}
+    {% endif %}
+    <div class="card">
+      <h3 class="mb-2 font-semibold">Activity</h3>
+      <ol class="space-y-2 text-xs">
+        {% for e in events %}<li><span class="text-slate-400">{{ e.created_at|date:"d M, H:i" }}</span><br>{{ e.message }}</li>{% endfor %}
+      </ol>
+    </div>
+  </aside>
+</div>
+{% endblock %}

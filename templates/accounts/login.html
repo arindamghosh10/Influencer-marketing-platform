@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Log in · {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md">
+  <h1 class="mb-6 text-2xl font-semibold">Log in</h1>
+  <form method="post" class="card space-y-4">
+    {% csrf_token %}
+    {% include "partials/form_errors.html" %}
+    {% include "partials/field.html" with field=form.username %}
+    {% include "partials/field.html" with field=form.password %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn-primary w-full">Log in</button>
+    <p class="text-center text-sm text-slate-500">New here? <a class="link" href="{% url 'accounts:signup' %}">Create an account</a></p>
+  </form>
+</div>
+{% endblock %}

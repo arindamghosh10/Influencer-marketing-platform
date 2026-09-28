@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="py-10 text-center">
+  <h1 class="mx-auto max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">UGC campaigns with the right creators, done in days.</h1>
+  <p class="mx-auto mt-4 max-w-2xl text-lg text-slate-600">Share your product link and budget. We match you with nano and micro creators whose audience fits, handle contracts and payments, and get approved content live on Instagram.</p>
+  <div class="mt-8 flex justify-center gap-3">
+    <a href="{% url 'accounts:signup' %}?role=brand" class="btn-primary">I'm a brand</a>
+    <a href="{% url 'accounts:signup' %}?role=creator" class="btn-secondary">I'm a creator</a>
+  </div>
+</section>
+<section class="grid gap-4 sm:grid-cols-3">
+  <div class="card"><h3 class="font-semibold">Matched, not guessed</h3><p class="mt-2 text-sm text-slate-600">Audience, city, niche, engagement and authenticity decide who you see, with the reason for every pick.</p></div>
+  <div class="card"><h3 class="font-semibold">Nothing posts without approval</h3><p class="mt-2 text-sm text-slate-600">Brand reviews first, the creator approves the exact final video, and every consent is recorded.</p></div>
+  <div class="card"><h3 class="font-semibold">Paid after it's live</h3><p class="mt-2 text-sm text-slate-600">Creators are paid once the post has been verified live for 7 days, with TDS handled.</p></div>
+</section>
+{% endblock %}

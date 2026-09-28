@@ -1,0 +1,27 @@
+{% extends "creators/onboarding/_layout.html" %}
+{% load platform %}
+{% block step %}
+<form method="post" class="space-y-5">{% csrf_token %}
+  {% include "partials/form_errors.html" %}
+  <div>
+    <h2 class="font-semibold">Your fees</h2>
+    <p class="text-sm text-slate-600">This is what you receive per deliverable (before TDS). You'll see the exact fee on every offer and can decline any offer.</p>
+    {% if rate_band %}<p class="mt-2 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">Creators with your audience size and engagement usually earn <strong>{{ rate_band.0|inr }} – {{ rate_band.1|inr }}</strong> per Reel.</p>{% endif %}
+  </div>
+  <div class="grid gap-4 sm:grid-cols-3">
+    {% include "partials/field.html" with field=form.reel_rupees %}
+    {% include "partials/field.html" with field=form.story_rupees %}
+    {% include "partials/field.html" with field=form.post_rupees %}
+  </div>
+  <div>
+    <p class="label">{{ form.red_lines.label }}</p>
+    <div class="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">{% for cb in form.red_lines %}<label class="flex items-center gap-2">{{ cb.tag }} {{ cb.choice_label }}</label>{% endfor %}</div>
+  </div>
+  {% include "partials/field.html" with field=form.allows_ai_likeness %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/field.html" with field=form.max_active_campaigns %}
+    <div class="pt-6">{% include "partials/field.html" with field=form.on_break %}</div>
+  </div>
+  <button class="btn-primary">Save and continue</button>
+</form>
+{% endblock %}

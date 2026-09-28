@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Create account · {{ PLATFORM_NAME }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md">
+  <h1 class="mb-1 text-2xl font-semibold">Create your account</h1>
+  <p class="mb-6 text-sm text-slate-500">Brands launch campaigns in minutes. Creators get paid, on time, for work that fits them.</p>
+  <form method="post" class="card space-y-4">
+    {% csrf_token %}
+    {% include "partials/form_errors.html" %}
+    <div class="grid grid-cols-2 gap-3">
+      {% for radio in form.role %}
+      <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 p-3 text-sm has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+        {{ radio.tag }} {{ radio.choice_label }}
+      </label>
+      {% endfor %}
+    </div>
+    {% for e in form.role.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    {% include "partials/field.html" with field=form.name %}
+    {% include "partials/field.html" with field=form.email %}
+    {% include "partials/field.html" with field=form.password %}
+    <button class="btn-primary w-full">Create account</button>
+    <p class="text-center text-sm text-slate-500">Already have an account? <a class="link" href="{% url 'accounts:login' %}">Log in</a></p>
+  </form>
+</div>
+{% endblock %}

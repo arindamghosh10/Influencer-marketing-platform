@@ -1,0 +1,13 @@
+{% load platform %}
+<div id="selection-summary" {% if oob %}hx-swap-oob="true"{% endif %} class="card sticky top-4">
+  <h3 class="font-semibold">Your selection</h3>
+  <dl class="mt-3 space-y-1 text-sm">
+    <div class="flex justify-between"><dt>Creators</dt><dd>{{ summary.count }}</dd></div>
+    <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ summary.subtotal|inr }}</dd></div>
+    <div class="flex justify-between"><dt>GST (18%)</dt><dd>{{ summary.gst|inr }}</dd></div>
+    <div class="flex justify-between border-t border-slate-100 pt-1 font-semibold"><dt>Total</dt><dd>{{ summary.total|inr }}</dd></div>
+    <div class="flex justify-between text-slate-500"><dt>Budget (excl. GST)</dt><dd>{{ summary.budget|inr }}</dd></div>
+  </dl>
+  {% if summary.over_budget %}<p class="mt-2 text-xs text-rose-600">Over budget: remove a creator.</p>{% endif %}
+  <p class="mt-2 text-xs text-slate-500">You pay only for creators who accept. If someone declines, we offer your backup automatically.</p>
+</div>

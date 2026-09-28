@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-1 text-2xl font-semibold">Consent centre</h1>
+<p class="mb-6 text-sm text-slate-500">Everything you've agreed to, when, and what you can switch off yourself. Campaign-specific consents are listed in each campaign.</p>
+<div class="card divide-y divide-slate-100 p-0">
+  {% for r in rows %}
+  <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+    <div>
+      <p class="font-medium">{{ r.scope.label }}</p>
+      <p class="text-xs text-slate-500">{% if r.event %}{{ r.event.get_action_display }} on {{ r.event.created_at|date:"d M Y, H:i" }}{% else %}Not given{% endif %}</p>
+    </div>
+    <div class="flex items-center gap-3">
+      {% if r.granted %}<span class="badge-green">On</span>{% else %}<span class="badge-gray">Off</span>{% endif %}
+      {% if r.revocable %}
+      <form method="post" action="{% url 'contracts:toggle_consent' r.scope.value %}">{% csrf_token %}
+        <input type="hidden" name="grant" value="{% if r.granted %}0{% else %}1{% endif %}">
+        <button class="btn-secondary">{% if r.granted %}Turn off{% else %}Turn on{% endif %}</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<h2 class="mb-3 mt-8 text-lg font-semibold">Signed agreements</h2>
+<div class="card divide-y divide-slate-100 p-0">
+  {% for a in agreements %}
+  <div class="flex items-center justify-between px-5 py-3 text-sm"><span>{{ a.get_kind_display }} v{{ a.version }} · signed {{ a.signed_at|date:"d M Y" }}</span><a class="link" href="{% url 'contracts:agreement' a.pk %}">View</a></div>
+  {% empty %}<p class="px-5 py-6 text-sm text-slate-500">No agreements signed yet.</p>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto max-w-2xl card">
+  <h1 class="mb-2 text-xl font-semibold">Brand agreement</h1>
+  {% if signed %}
+    <p class="text-sm text-slate-600">You've signed the current agreement. <a class="link" href="{% url 'contracts:consents' %}">View signed agreements</a></p>
+    <a href="{% url 'brands:dashboard' %}" class="btn-primary mt-4">Go to dashboard</a>
+  {% else %}
+    <ul class="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
+      <li>You pay per campaign, only for creators who accepted.</li>
+      <li>Up to 2 revision rounds; content goes live only after you and the creator approve it.</li>
+      <li>You can reuse campaign content in your paid ads for the period in each order.</li>
+    </ul>
+    <form method="post">{% csrf_token %}<button class="btn-primary">Read and sign</button></form>
+  {% endif %}
+</div>
+{% endblock %}

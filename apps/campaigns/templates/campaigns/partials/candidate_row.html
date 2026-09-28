@@ -1,0 +1,23 @@
+{% load platform %}
+<div id="cand-{{ c.id }}" class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between {% if c.selected %}bg-brand-50/40{% endif %}">
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="font-semibold">{{ c.display_name }}</span>
+      <span class="text-sm text-slate-500">@{{ c.ig_username }}</span>
+      <span class="badge-gray capitalize">{{ c.tier }}</span>
+      {% if c.role == "backup" %}<span class="badge-amber">Backup</span>{% endif %}
+      <span class="badge-indigo" title="How well this creator fits your brief">{{ c.score_pct }}% match</span>
+    </div>
+    <p class="mt-1 text-xs text-slate-500">{{ c.niche }}{% if c.city %} · {{ c.city }}{% endif %} · {{ c.followers|compact }} followers · reach ≈{{ c.avg_reach|compact }} · ER {{ c.engagement_rate|pct }} · authenticity {{ c.authenticity }}/100</p>
+    <ul class="mt-2 space-y-0.5 text-sm text-slate-700">{% for r in c.reasons %}<li>✓ {{ r }}</li>{% endfor %}</ul>
+  </div>
+  <div class="flex shrink-0 items-center gap-3">
+    <span class="text-right"><span class="block text-lg font-semibold">{{ c.price|inr }}</span><span class="text-xs text-slate-500">+ GST</span></span>
+    {% if editable %}
+    <button class="{% if c.selected %}btn-secondary{% else %}btn-primary{% endif %}"
+            hx-post="{% url 'campaigns:toggle_candidate' campaign.pk c.id %}" hx-target="#cand-{{ c.id }}" hx-swap="outerHTML">
+      {% if c.selected %}Remove{% else %}Add{% endif %}
+    </button>
+    {% elif c.selected %}<span class="badge-green">Selected</span>{% endif %}
+  </div>
+</div>

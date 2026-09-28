@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <h1 class="mb-1 text-2xl font-semibold">{% if campaign %}Edit campaign{% else %}New campaign{% endif %}</h1>
+  <p class="mb-6 text-sm text-slate-500">Paste your product link and we'll read the page to build a brief. You'll review it before any creator sees it.</p>
+  <form method="post" enctype="multipart/form-data" class="space-y-6">{% csrf_token %}
+    {% include "partials/form_errors.html" %}
+    <div class="card space-y-4">
+      <h2 class="font-semibold">Product</h2>
+      {% include "partials/field.html" with field=form.title %}
+      {% include "partials/field.html" with field=form.product_url %}
+      {% include "partials/field.html" with field=form.product_notes %}
+      {% include "partials/field.html" with field=form.product_image %}
+    </div>
+    <div class="card space-y-4">
+      <h2 class="font-semibold">Goal and budget</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.objective %}
+        {% include "partials/field.html" with field=form.budget_rupees %}
+        {% include "partials/field.html" with field=form.deliverable %}
+        {% include "partials/field.html" with field=form.creators_wanted %}
+      </div>
+    </div>
+    <div class="card space-y-4">
+      <h2 class="font-semibold">Audience</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.target_gender %}
+        {% include "partials/field.html" with field=form.target_cities_csv %}
+        {% include "partials/field.html" with field=form.languages_csv %}
+      </div>
+    </div>
+    <div class="card space-y-4">
+      <h2 class="font-semibold">Content</h2>
+      {% include "partials/field.html" with field=form.content_mode %}
+      {% include "partials/field.html" with field=form.must_say %}
+      {% include "partials/field.html" with field=form.must_not_say %}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "partials/field.html" with field=form.content_deadline %}
+        {% include "partials/field.html" with field=form.usage_rights_days %}
+      </div>
+      {% include "partials/field.html" with field=form.paid_ads_allowed %}
+    </div>
+    <button class="btn-primary">{% if campaign %}Save changes{% else %}Create campaign and read my product{% endif %}</button>
+  </form>
+</div>
+{% endblock %}
