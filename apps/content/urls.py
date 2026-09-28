@@ -8,6 +8,7 @@ urlpatterns = [
     path("creator/campaigns/<int:slot_id>/draft/", views.submit_draft, name="submit_draft"),
     path("creator/campaigns/<int:slot_id>/approve/", views.final_approve, name="final_approve"),
     path("creator/campaigns/<int:slot_id>/posted/", views.self_post, name="self_post"),
+    path("creator/campaigns/<int:slot_id>/withdraw/", views.withdraw, name="withdraw"),
     path("brand/campaigns/<int:campaign_id>/creators/<int:slot_id>/", views.review, name="review"),
     path(
         "brand/campaigns/<int:campaign_id>/creators/<int:slot_id>/review/",

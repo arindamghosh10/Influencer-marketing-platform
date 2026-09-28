@@ -149,18 +149,12 @@ def mark_paid(order_id, payment_id, amount=None):
 
 
 def _flag_refund(order, slots):
-    from apps.accounts.models import User
+    """Slots released while the brand was paying: refund them automatically."""
+    from .refunds import issue_refund
 
-    amount = sum(s.brand_price for s in slots)
-    log.warning("Order %s paid for %d released slot(s); refund %s", order.pk, len(slots), amount)
-    for ops in User.objects.filter(role=User.Role.OPS, is_active=True):
-        notify(
-            ops,
-            f"Refund needed on order #{order.pk}",
-            f"{len(slots)} slot(s) were released before payment completed. Refund {format_inr(amount)} "
-            "plus GST.",
-            url=reverse("admin:payments_order_change", args=[order.pk]),
-        )
+    for slot in slots:
+        log.warning("Order %s paid for released slot %s; refunding", order.pk, slot.pk)
+        issue_refund(order, slot.brand_price, "Creator was released before your payment completed", slot=slot)
 
 
 def creator_earnings(creator):

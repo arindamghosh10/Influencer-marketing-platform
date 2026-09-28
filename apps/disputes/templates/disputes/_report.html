@@ -1,0 +1,18 @@
+{# Usage: include with form=report_form action=url open_dispute=... #}
+{% if open_dispute %}
+<div class="card border-amber-200 bg-amber-50 text-sm">
+  <p class="font-semibold text-amber-900">Problem reported {{ open_dispute.created_at|timesince }} ago</p>
+  <p class="mt-1">{{ open_dispute.get_category_display }}: {{ open_dispute.description }}</p>
+  <p class="mt-1 text-xs text-amber-800">Our team is reviewing it. Payment is on hold until it's resolved.</p>
+</div>
+{% elif can_report %}
+<details class="card text-sm">
+  <summary class="cursor-pointer text-slate-600">Report a problem</summary>
+  <form method="post" action="{{ action }}" class="mt-3 space-y-3">{% csrf_token %}
+    {% include "partials/field.html" with field=form.category %}
+    {% include "partials/field.html" with field=form.description %}
+    <p class="help">Our team reviews everything recorded for this campaign (brief, agreements, drafts, feedback, post checks) and decides fairly. Payment is held while we look into it.</p>
+    <button class="btn-secondary">Send report</button>
+  </form>
+</details>
+{% endif %}

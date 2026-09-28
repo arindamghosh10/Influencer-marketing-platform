@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from apps.core.events import notify, record
 
-from .models import Order, Payout, WebhookEvent
+from .models import Order, Payout, Refund, WebhookEvent
 
 
 @admin.register(Order)
@@ -52,3 +52,11 @@ class PayoutAdmin(admin.ModelAdmin):
 class WebhookEventAdmin(admin.ModelAdmin):
     list_display = ("received_at", "provider", "event_type", "event_id")
     readonly_fields = [f.name for f in WebhookEvent._meta.fields]
+
+
+@admin.register(Refund)
+class RefundAdmin(admin.ModelAdmin):
+    list_display = ("credit_note_number", "order", "slot", "total", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("credit_note_number", "provider_refund_id")
+    readonly_fields = [f.name for f in Refund._meta.fields]

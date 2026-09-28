@@ -58,10 +58,16 @@ def brand_posts(brand, campaign=None):
 
 
 def brand_spend(brand, campaign=None):
+    """Paid order value minus refunds (excl. GST)."""
+    from apps.payments.models import Refund
+
     qs = Order.objects.filter(brand=brand, status=Order.Status.PAID)
+    refunds = Refund.objects.filter(order__brand=brand).exclude(status=Refund.Status.FAILED)
     if campaign is not None:
         qs = qs.filter(campaign=campaign)
-    return qs.aggregate(t=Sum("subtotal"))["t"] or 0
+        refunds = refunds.filter(order__campaign=campaign)
+    paid = qs.aggregate(t=Sum("subtotal"))["t"] or 0
+    return paid - (refunds.aggregate(t=Sum("amount"))["t"] or 0)
 
 
 def brand_overview(brand):

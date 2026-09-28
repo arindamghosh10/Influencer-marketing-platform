@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <div class="mb-4 flex items-center justify-between print:hidden">
+    <a href="{% url 'reports:billing' %}" class="link text-sm">← Billing</a>
+    <button onclick="window.print()" class="btn-secondary">Print / save as PDF</button>
+  </div>
+  <div class="card space-y-6 text-sm">
+    <div class="flex flex-wrap justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-bold">Credit Note</h1>
+        <p class="mt-1 font-semibold">{{ platform.PLATFORM_LEGAL_NAME }}</p>
+        {% if platform.PLATFORM_ADDRESS %}<p class="text-slate-600">{{ platform.PLATFORM_ADDRESS }}</p>{% endif %}
+        <p class="text-slate-600">GSTIN: {{ platform.PLATFORM_GSTIN|default:"(to be added)" }}</p>
+      </div>
+      <div class="text-right">
+        <p>Credit note no. <strong>{{ refund.credit_note_number }}</strong></p>
+        <p>Date: {{ refund.created_at|date:"d M Y" }}</p>
+        <p>Against invoice <a class="link" href="{% url 'payments:invoice' order.pk %}">{{ order.invoice_number }}</a> ({{ order.paid_at|date:"d M Y" }})</p>
+      </div>
+    </div>
+    <div>
+      <p class="text-slate-500">Issued to</p>
+      <p class="font-semibold">{{ order.brand.company_name }}</p>
+      <p class="text-slate-600">GSTIN: {{ order.brand.gstin }}</p>
+    </div>
+    <table class="w-full">
+      <thead class="border-b border-slate-200 text-left text-slate-500"><tr><th class="py-2">Description</th><th class="py-2">SAC</th><th class="py-2 text-right">Amount</th></tr></thead>
+      <tbody><tr class="border-b border-slate-100"><td class="py-2">Refund: {{ refund.reason }}{% if refund.slot %} (@{{ refund.slot.creator.ig_username }}, {{ order.campaign.title }}){% endif %}</td><td class="py-2">{{ platform.SAC_CODE }}</td><td class="py-2 text-right">{{ refund.amount|inr }}</td></tr></tbody>
+      <tfoot>
+        {% if refund.igst %}<tr><td colspan="2" class="pr-4 pt-3 text-right">IGST @ 18%</td><td class="pt-3 text-right">{{ refund.igst|inr }}</td></tr>
+        {% else %}<tr><td colspan="2" class="pr-4 pt-3 text-right">CGST @ 9%</td><td class="pt-3 text-right">{{ refund.cgst|inr }}</td></tr><tr><td colspan="2" class="pr-4 text-right">SGST @ 9%</td><td class="text-right">{{ refund.sgst|inr }}</td></tr>{% endif %}
+        <tr class="text-base font-semibold"><td colspan="2" class="pr-4 pt-2 text-right">Total credited</td><td class="pt-2 text-right">{{ refund.total|inr }}</td></tr>
+      </tfoot>
+    </table>
+    <p class="text-xs text-slate-500">Status: {{ refund.get_status_display }}{% if refund.processed_at %} on {{ refund.processed_at|date:"d M Y" }}{% endif %}. Refunds reach the original payment method in 5–7 working days. This is a computer-generated credit note.</p>
+  </div>
+</div>
+{% endblock %}

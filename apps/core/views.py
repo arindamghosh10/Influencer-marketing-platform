@@ -46,6 +46,8 @@ def ops_dashboard(request):
     from apps.brands.models import BrandProfile
     from apps.campaigns.models import Campaign
     from apps.creators.models import CreatorProfile
+    from apps.disputes.models import Dispute
+    from apps.payments.models import Payout
 
     from .models import Event
 
@@ -62,5 +64,9 @@ def ops_dashboard(request):
             "campaigns": Campaign.objects.exclude(status=Campaign.Status.CANCELLED).count(),
         },
         "events": Event.objects.select_related("actor")[:25],
+        "open_disputes": Dispute.objects.filter(status=Dispute.Status.OPEN).select_related(
+            "slot__campaign", "slot__creator"
+        ),
+        "payouts_due": Payout.objects.filter(status=Payout.Status.RELEASABLE).select_related("creator"),
     }
     return render(request, "core/ops.html", context)

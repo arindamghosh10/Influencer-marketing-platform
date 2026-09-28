@@ -3,7 +3,7 @@
 {% block content %}
 <h1 class="mb-6 text-2xl font-semibold">Billing</h1>
 <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-  <div class="stat"><p class="stat-label">Spent (excl. GST)</p><p class="stat-value">{{ totals.subtotal|inr }}</p></div>
+  <div class="stat"><p class="stat-label" title="Payments minus refunds">Spent (excl. GST) ⓘ</p><p class="stat-value">{{ totals.subtotal|inr }}</p></div>
   <div class="stat"><p class="stat-label" title="Claim this as input tax credit with the invoices below">GST paid ⓘ</p><p class="stat-value">{{ totals.gst|inr }}</p></div>
   <div class="stat"><p class="stat-label">Total paid</p><p class="stat-value">{{ totals.total|inr }}</p></div>
 </div>
@@ -17,4 +17,17 @@
     </tbody>
   </table>
 </div>
+{% if refunds %}
+<div class="card mt-6 overflow-x-auto p-0">
+  <h2 class="px-5 py-4 font-semibold">Refunds</h2>
+  <table class="w-full text-sm">
+    <thead class="border-y border-slate-200 text-left text-xs text-slate-500"><tr><th class="px-4 py-2">Credit note</th><th class="px-4 py-2">Date</th><th class="px-4 py-2">Reason</th><th class="px-4 py-2 text-right">Total</th><th class="px-4 py-2">Status</th></tr></thead>
+    <tbody>
+      {% for r in refunds %}
+      <tr class="border-b border-slate-100"><td class="px-4 py-2"><a class="link" href="{% url 'payments:credit_note' r.pk %}">{{ r.credit_note_number }}</a></td><td class="px-4 py-2">{{ r.created_at|date:"d M Y" }}</td><td class="px-4 py-2">{{ r.reason }}<br><span class="text-xs text-slate-500">{{ r.order.campaign.title }}</span></td><td class="px-4 py-2 text-right tabular-nums">−{{ r.total|inr }}</td><td class="px-4 py-2"><span class="{% if r.status == 'processed' %}badge-green{% else %}badge-amber{% endif %}">{{ r.get_status_display }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endblock %}

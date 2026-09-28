@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-6 text-2xl font-semibold">Disputes</h1>
+<div class="card mb-6 p-0">
+  <h2 class="px-5 py-4 font-semibold">Open ({{ open|length }})</h2>
+  {% for d in open %}
+  <a href="{% url 'disputes:detail' d.pk %}" class="block border-t border-slate-100 px-5 py-3 text-sm hover:bg-slate-50">
+    <strong>#{{ d.pk }}</strong> · {{ d.get_party_display }}: {{ d.get_category_display }} · {{ d.slot.campaign.brand.company_name }} × @{{ d.slot.creator.ig_username }}
+    <span class="float-right text-xs text-slate-500">{{ d.created_at|timesince }} ago</span>
+  </a>
+  {% empty %}<p class="px-5 pb-5 text-sm text-slate-500">No open disputes.</p>{% endfor %}
+</div>
+<div class="card p-0">
+  <h2 class="px-5 py-4 font-semibold">Recently resolved</h2>
+  {% for d in resolved %}
+  <a href="{% url 'disputes:detail' d.pk %}" class="block border-t border-slate-100 px-5 py-3 text-sm hover:bg-slate-50">#{{ d.pk }} · {{ d.get_resolution_display }} · {{ d.slot.campaign.title }}</a>
+  {% empty %}<p class="px-5 pb-5 text-sm text-slate-500">None yet.</p>{% endfor %}
+</div>
+{% endblock %}

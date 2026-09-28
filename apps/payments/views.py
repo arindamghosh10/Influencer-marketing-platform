@@ -128,6 +128,21 @@ def invoice(request, pk):
     return render(request, "payments/invoice.html", {"order": order, "platform": settings})
 
 
+def credit_note(request, pk):
+    from .models import Refund
+
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('accounts:login')}?next={request.path}")
+    refund = get_object_or_404(
+        Refund.objects.select_related("order__brand", "order__campaign", "slot__creator"), pk=pk
+    )
+    if not (request.user.is_ops or refund.order.brand.user_id == request.user.pk):
+        raise PermissionDenied
+    return render(
+        request, "payments/credit_note.html", {"refund": refund, "order": refund.order, "platform": settings}
+    )
+
+
 @csrf_exempt
 @require_POST
 def razorpay_webhook(request):
@@ -147,6 +162,13 @@ def razorpay_webhook(request):
             )
     except IntegrityError:
         return HttpResponse("duplicate")  # already processed
+    if event.get("event") in ("refund.processed", "refund.failed"):
+        from .refunds import mark_refund_status
+
+        entity = event.get("payload", {}).get("refund", {}).get("entity", {})
+        mark_refund_status(
+            entity.get("id", ""), event["event"] == "refund.processed", error=str(entity.get("status", ""))
+        )
     if event.get("event") in ("payment.captured", "order.paid"):
         payment = event.get("payload", {}).get("payment", {}).get("entity", {})
         order = Order.objects.filter(provider="razorpay", provider_order_id=payment.get("order_id")).first()

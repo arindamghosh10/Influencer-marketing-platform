@@ -38,13 +38,20 @@ def billing(request):
     brand, redirect_ = _brand_or_setup(request)
     if redirect_:
         return redirect_
+    from apps.payments.models import Refund
+
     orders = Order.objects.filter(brand=brand, status=Order.Status.PAID).select_related("campaign")
+    refunds = (
+        Refund.objects.filter(order__brand=brand)
+        .exclude(status=Refund.Status.FAILED)
+        .select_related("order__campaign")
+    )
     totals = {
-        "subtotal": sum(o.subtotal for o in orders),
-        "gst": sum(o.gst_total for o in orders),
-        "total": sum(o.total for o in orders),
+        "subtotal": sum(o.subtotal for o in orders) - sum(r.amount for r in refunds),
+        "gst": sum(o.gst_total for o in orders) - sum(r.gst_total for r in refunds),
+        "total": sum(o.total for o in orders) - sum(r.total for r in refunds),
     }
-    return render(request, "reports/billing.html", {"orders": orders, "totals": totals})
+    return render(request, "reports/billing.html", {"orders": orders, "refunds": refunds, "totals": totals})
 
 
 @brand_required

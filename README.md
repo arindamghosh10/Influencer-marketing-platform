@@ -27,6 +27,8 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 | Verification: daily checks for 7 days, payout on hold if the post disappears or loses its disclosure, weekly monitoring until the minimum live period ends; campaign results (reach, views, engagement rate, CPM) | ✅ |
 | Dashboards: brand home (spend, reach, views, ER, CPM, views chart, upcoming posts), per-creator results and chart, printable campaign report, content library with usage-rights expiry, billing, weekly email digest | ✅ |
 | Creator earnings: monthly chart, payment history with UTR, post performance, financial-year statement with quarterly TDS totals | ✅ |
+| Refunds: creator withdrawal or ops cancellation before approval refunds the brand with a GST credit note (own gap-free series); unpaid stale slots refunded automatically; billing shows net spend | ✅ |
+| Disputes: brand or creator reports a problem, payout held while open, ops evidence pack (agreements, consents with hashes, drafts, reviews, post checks, timeline), resolve as pay creator / full refund / split | ✅ |
 | Deployment (Oracle Cloud free tier) | Later |
 
 ## Run it locally

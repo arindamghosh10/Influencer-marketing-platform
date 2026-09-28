@@ -33,6 +33,10 @@ class MockPayments:
             raise PaymentError("Test payment wasn't confirmed.")
         return f"mock_pay_{secrets.token_hex(6)}"
 
+    def refund(self, order, amount, note):
+        """Returns (provider_refund_id, processed_now)."""
+        return f"mock_rfnd_{secrets.token_hex(6)}", True
+
 
 class RazorpayPayments:
     name = "razorpay"
@@ -78,6 +82,23 @@ class RazorpayPayments:
         if not hmac.compare_digest(expected, signature):
             raise PaymentError("Payment signature is invalid.")
         return payment_id
+
+    def refund(self, order, amount, note):
+        """Refund part or all of a captured payment. Razorpay may process it later; a
+        refund.processed / refund.failed webhook then updates the status."""
+        try:
+            resp = httpx.post(
+                f"{self.api}/payments/{order.provider_payment_id}/refund",
+                auth=(self.key_id, self.key_secret),
+                json={"amount": amount, "notes": {"order_id": str(order.pk), "reason": note[:200]}},
+                timeout=15,
+            )
+        except httpx.HTTPError as exc:
+            raise PaymentError(f"Couldn't reach Razorpay: {exc.__class__.__name__}") from exc
+        if resp.status_code >= 400:
+            raise PaymentError(f"Razorpay refund error {resp.status_code}: {resp.text[:200]}")
+        data = resp.json()
+        return data["id"], data.get("status") == "processed"
 
     @staticmethod
     def verify_webhook(body, signature):

@@ -81,6 +81,18 @@
         {% if campaign.must_not_say %}<p class="mt-1">⛔ Don't mention: {{ campaign.must_not_say }}</p>{% endif %}
         {% if brief.risky_claims %}<p class="mt-1">⚠️ Don't claim: {{ brief.risky_claims|join:"; " }}</p>{% endif %}
       </div>
+      {% include "disputes/_report.html" with form=report_form action=report_action %}
+      {% if slot.status == "confirmed" or slot.status == "in_review" or slot.status == "changes_requested" %}
+      <details class="card text-sm">
+        <summary class="cursor-pointer text-slate-600">Can't deliver this campaign?</summary>
+        <form method="post" action="{% url 'content:withdraw' slot.id %}" class="mt-3 space-y-2" onsubmit="return confirm('Withdraw from this campaign? The brand will be refunded and your reliability score will drop.')">{% csrf_token %}
+          <label class="label" for="withdraw-reason">What happened?</label>
+          <textarea id="withdraw-reason" name="reason" rows="2" class="input" required></textarea>
+          <p class="help">Withdrawing lowers your reliability score, which affects future offers. Please only do this if you really can't deliver.</p>
+          <button class="btn-danger">Withdraw</button>
+        </form>
+      </details>
+      {% endif %}
       <div class="card text-sm" x-data="{ open: true }">
         <button class="flex w-full items-center justify-between font-semibold" @click="open = !open"><span>AI script helper</span><span x-text="open ? '−' : '+'"></span></button>
         <div x-show="open" class="mt-3 space-y-3">

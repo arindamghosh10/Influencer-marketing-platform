@@ -529,12 +529,28 @@ def _handle_problem(post, slot, problem, now):
 
 
 def _verify(post, slot, now):
+    from apps.disputes.services import has_open_dispute
     from apps.payments.models import Payout
 
     post.status = Post.Status.VERIFIED
     post.verified_at = now
     slot.status = Slot.Status.VERIFIED
     slot.save(update_fields=["status", "updated_at"])
+    if has_open_dispute(slot):
+        # A dispute is open: the post is verified but the payout waits for ops to resolve it.
+        record(
+            "post.verified",
+            f"{slot.creator.display_name}'s post verified; payout on hold (open dispute)",
+            target=slot.campaign,
+        )
+        notify(
+            slot.creator.user,
+            "Post verified, payout on hold",
+            "Your post passed verification. Payment is on hold until the open dispute is resolved.",
+            url=reverse("content:workspace", args=[slot.pk]),
+        )
+        maybe_complete_campaign(slot.campaign)
+        return
     Payout.objects.filter(slot=slot, status=Payout.Status.HELD).update(
         status=Payout.Status.RELEASABLE, updated_at=now
     )

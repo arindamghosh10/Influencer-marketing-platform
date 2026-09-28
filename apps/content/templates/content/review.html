@@ -36,6 +36,8 @@
   <div class="card mt-6 text-sm text-slate-600">{{ slot.creator.display_name }} is creating the content{% if campaign.content_deadline %}, due {{ campaign.content_deadline|date:"d M Y" }}{% endif %}. You'll be notified when the draft arrives.</div>
   {% endif %}
 
+  <div class="mt-6">{% include "disputes/_report.html" with form=report_form action=report_action %}</div>
+
   {% if assets|length > 1 %}
   <details class="card mt-6"><summary class="cursor-pointer font-semibold">Earlier versions</summary>
     <div class="mt-3 space-y-3">{% for asset in assets %}{% if asset.id != latest.id %}{% include "content/_asset.html" with show_media=False %}{% endif %}{% endfor %}</div>

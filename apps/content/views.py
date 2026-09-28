@@ -14,6 +14,26 @@ from . import services
 from .forms import DraftForm, FinalApprovalForm, ReviewForm, SelfPostForm
 from .models import Asset
 
+
+def _dispute_context(slot, party):
+    from django.urls import reverse
+
+    from apps.disputes import services as disputes
+    from apps.disputes.views import report_form
+
+    action = (
+        reverse("disputes:creator_report", args=[slot.pk])
+        if party == "creator"
+        else reverse("disputes:brand_report", args=[slot.campaign_id, slot.pk])
+    )
+    return {
+        "open_dispute": disputes.open_dispute(slot),
+        "can_report": disputes.can_raise(slot),
+        "report_form": report_form(party),
+        "report_action": action,
+    }
+
+
 # --- Creator -------------------------------------------------------------------------------
 
 
@@ -49,6 +69,7 @@ def workspace(request, slot_id):
         "self_post_form": SelfPostForm(),
         "can_auto_publish": services.can_auto_publish(slot.creator),
         "max_revisions": services.settings.MAX_REVISIONS,
+        **_dispute_context(slot, "creator"),
         **_post_context(slot),
     }
     return render(request, "content/workspace.html", context)
@@ -111,6 +132,26 @@ def self_post(request, slot_id):
     return redirect("content:workspace", slot_id=slot.pk)
 
 
+@creator_required
+@require_POST
+def withdraw(request, slot_id):
+    """Creator can't deliver: release them and refund the brand (before content approval)."""
+    from apps.payments.refunds import RefundError, cancel_paid_slot
+
+    slot = _creator_slot(request, slot_id)
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        messages.error(request, "Please tell us briefly why you can't deliver.")
+        return redirect("content:workspace", slot_id=slot.pk)
+    try:
+        cancel_paid_slot(slot, f"Creator withdrew: {reason[:200]}", actor=request.user, by_creator=True)
+    except RefundError as exc:
+        messages.error(request, str(exc))
+        return redirect("content:workspace", slot_id=slot.pk)
+    messages.info(request, "You've withdrawn from this campaign. The brand has been refunded.")
+    return redirect("creators:dashboard")
+
+
 # --- Brand ---------------------------------------------------------------------------------
 
 
@@ -138,6 +179,7 @@ def review(request, campaign_id, slot_id):
         and latest.status == Asset.Status.IN_REVIEW,
         "revisions_left": max(0, services.settings.MAX_REVISIONS - slot.revisions_used),
         "snapshots": list(slot.post.snapshots.all()[:30]) if hasattr(slot, "post") else [],
+        **_dispute_context(slot, "brand"),
         **_post_context(slot),
     }
     return render(request, "content/review.html", context)

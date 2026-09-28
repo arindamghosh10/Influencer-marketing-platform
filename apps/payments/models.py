@@ -43,23 +43,69 @@ class Order(TimeStampedModel):
 
 
 class InvoiceSequence(models.Model):
-    """Gap-free invoice numbers per Indian financial year, as GST rules require."""
+    """Gap-free document numbers per series and Indian financial year, as GST rules require.
 
-    financial_year = models.CharField(max_length=7, unique=True)  # e.g. "2026-27"
+    Series "INV" numbers tax invoices; "CN" numbers credit notes (refunds).
+    """
+
+    series = models.CharField(max_length=8, default="INV")
+    financial_year = models.CharField(max_length=7)  # e.g. "2026-27"
     last_number = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["series", "financial_year"], name="unique_series_per_fy")
+        ]
+
     def __str__(self):
-        return f"{self.financial_year}: {self.last_number}"
+        return f"{self.series} {self.financial_year}: {self.last_number}"
 
     @classmethod
-    def next_number(cls, today):
+    def next_number(cls, today, series="INV"):
         start = today.year if today.month >= 4 else today.year - 1
         fy = f"{start}-{str(start + 1)[-2:]}"
         with transaction.atomic():
-            seq, _ = cls.objects.select_for_update().get_or_create(financial_year=fy)
+            seq, _ = cls.objects.select_for_update().get_or_create(series=series, financial_year=fy)
             seq.last_number += 1
             seq.save(update_fields=["last_number"])
-        return f"{settings.INVOICE_PREFIX}/{fy}/{seq.last_number:05d}"
+        prefix = settings.INVOICE_PREFIX if series == "INV" else f"{settings.INVOICE_PREFIX}-{series}"
+        return f"{prefix}/{fy}/{seq.last_number:05d}"
+
+
+class Refund(TimeStampedModel):
+    """Money returned to a brand, with a GST credit note against the original invoice."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Processing"
+        PROCESSED = "processed", "Refunded"
+        FAILED = "failed", "Failed"
+
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="refunds")
+    slot = models.ForeignKey(
+        "offers.Slot", null=True, blank=True, on_delete=models.PROTECT, related_name="refunds"
+    )
+    amount = models.PositiveBigIntegerField(help_text="Taxable value refunded (paise)")
+    cgst = models.PositiveBigIntegerField(default=0)
+    sgst = models.PositiveBigIntegerField(default=0)
+    igst = models.PositiveBigIntegerField(default=0)
+    total = models.PositiveBigIntegerField()
+    reason = models.CharField(max_length=300)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    provider_refund_id = models.CharField(max_length=100, blank=True, db_index=True)
+    credit_note_number = models.CharField(max_length=30, unique=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    error = models.CharField(max_length=300, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Refund {self.credit_note_number} on order #{self.order_id}"
+
+    @property
+    def gst_total(self):
+        return self.cgst + self.sgst + self.igst
 
 
 class Payout(TimeStampedModel):

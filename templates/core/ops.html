@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load platform %}
 {% block content %}
 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
   <h1 class="text-2xl font-semibold">Ops overview</h1>
@@ -27,6 +28,20 @@
         <a class="link" href="{% url 'admin:brands_brandprofile_change' b.pk %}">Review</a>
       </div>
     {% empty %}<p class="text-sm text-slate-500">Nothing waiting.</p>{% endfor %}
+  </div>
+</div>
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  <div class="card">
+    <h2 class="mb-3 font-semibold">Open disputes ({{ open_disputes|length }}) <a class="link float-right text-sm font-normal" href="{% url 'disputes:list' %}">All</a></h2>
+    {% for d in open_disputes %}
+      <div class="flex items-center justify-between border-t border-slate-100 py-2 text-sm"><span>#{{ d.pk }} {{ d.get_category_display }} · @{{ d.slot.creator.ig_username }}</span><a class="link" href="{% url 'disputes:detail' d.pk %}">Review</a></div>
+    {% empty %}<p class="text-sm text-slate-500">None.</p>{% endfor %}
+  </div>
+  <div class="card">
+    <h2 class="mb-3 font-semibold">Payouts to send ({{ payouts_due|length }}) <a class="link float-right text-sm font-normal" href="{% url 'admin:payments_payout_changelist' %}?status__exact=releasable">Pay in admin</a></h2>
+    {% for p in payouts_due %}
+      <div class="flex items-center justify-between border-t border-slate-100 py-2 text-sm"><span>{{ p.creator.display_name }} · a/c ••{{ p.creator.bank_account_last4 }}</span><span class="font-medium">{{ p.net|inr }}</span></div>
+    {% empty %}<p class="text-sm text-slate-500">Nothing to pay right now.</p>{% endfor %}
   </div>
 </div>
 <div class="card mt-6">
