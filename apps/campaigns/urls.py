@@ -13,4 +13,6 @@ urlpatterns = [
     path("<int:pk>/match/", views.rematch, name="rematch"),
     path("<int:pk>/candidates/<int:candidate_id>/toggle/", views.toggle_candidate, name="toggle_candidate"),
     path("<int:pk>/selection/confirm/", views.confirm_selection, name="confirm_selection"),
+    path("<int:pk>/offers/send/", views.send_offers, name="send_offers"),
+    path("<int:pk>/slots/<int:slot_id>/cancel/", views.cancel_slot, name="cancel_slot"),
 ]

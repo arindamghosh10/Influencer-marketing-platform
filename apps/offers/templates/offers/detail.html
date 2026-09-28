@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'creators:dashboard' %}" class="link text-sm">← Dashboard</a>
+  <div class="mb-4 mt-2 flex flex-wrap items-center justify-between gap-2">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ offer.brand_name }}{% if offer.brand_verified %} <span class="badge-indigo align-middle">✓ verified</span>{% endif %}</h1>
+      <p class="text-sm text-slate-500">{{ offer.campaign_title }} · {{ offer.deliverable }}</p>
+    </div>
+    <span class="{% if offer.status == 'pending' %}badge-amber{% elif offer.status == 'accepted' %}badge-green{% else %}badge-gray{% endif %}">{{ offer.status_label }}</span>
+  </div>
+
+  {% if open %}
+  <div class="card mb-4 border-amber-200 bg-amber-50 text-sm" x-data="countdown('{{ offer.expires_at|date:'c' }}')" x-init="tick()">
+    Reply within <strong x-text="left">{{ offer.expires_at|timeuntil }}</strong>. After that, the brand's backup creator gets this offer.
+  </div>
+  {% endif %}
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="stat"><p class="stat-label">Your fee</p><p class="stat-value">{{ offer.fee|inr }}</p></div>
+    <div class="stat"><p class="stat-label" title="Tax deducted at source, as required by law. You get a certificate to claim it.">TDS ({{ offer.tds_rate_pct }}%) ⓘ</p><p class="stat-value">−{{ offer.tds|inr }}</p></div>
+    <div class="stat"><p class="stat-label">You receive</p><p class="stat-value text-emerald-700">{{ offer.net|inr }}</p>{% if offer.gst %}<p class="text-xs text-slate-500">incl. GST {{ offer.gst|inr }}</p>{% endif %}</div>
+  </div>
+
+  <div class="card mt-4 space-y-3 text-sm">
+    <h2 class="text-base font-semibold">The product</h2>
+    <p><strong>{{ offer.product_name }}</strong></p>
+    <p class="text-slate-600">{{ offer.product_summary }}</p>
+    {% if offer.benefits %}<ul class="list-disc pl-5 text-slate-600">{% for b in offer.benefits %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+
+  <div class="card mt-4 text-sm">
+    <h2 class="mb-2 text-base font-semibold">What you're agreeing to</h2>
+    <ul class="space-y-2">
+      <li>📹 <strong>1 × {{ offer.deliverable }}</strong>, made by you{% if offer.ai_likeness %} with AI help using your likeness (you approve the final video){% endif %}.</li>
+      {% if offer.content_deadline %}<li>🗓️ Draft due by <strong>{{ offer.content_deadline|date:"d M Y" }}</strong>.</li>{% endif %}
+      {% if offer.must_say %}<li>✅ Mention: {{ offer.must_say }}</li>{% endif %}
+      {% if offer.must_not_say %}<li>⛔ Don't mention: {{ offer.must_not_say }}</li>{% endif %}
+      {% if offer.risky_claims %}<li>⚠️ Don't claim: {{ offer.risky_claims|join:"; " }}</li>{% endif %}
+      <li>✍️ Nothing is posted without you approving the exact video and caption. The caption includes a paid-partnership disclosure.</li>
+      <li>⏳ Keep the post live for at least {{ offer.min_live_days }} days. You're paid after it has been live for {{ offer.verification_days }} days.</li>
+      <li>📣 The brand can reuse the content on its channels{% if offer.paid_ads %} and in paid ads{% endif %} for {{ offer.usage_rights_days }} days.</li>
+    </ul>
+  </div>
+
+  {% if open %}
+  <div class="mt-6 flex flex-wrap items-start gap-3" x-data="{ declining: false }">
+    <form method="post" action="{% url 'offers:accept' offer.id %}">{% csrf_token %}<button class="btn-primary">Accept: review and sign</button></form>
+    <button class="btn-secondary" @click="declining = !declining">Decline</button>
+    <form method="post" action="{% url 'offers:decline' offer.id %}" x-show="declining" x-cloak class="card w-full space-y-3">{% csrf_token %}
+      {% include "partials/field.html" with field=decline_form.reason %}
+      {% include "partials/field.html" with field=decline_form.note %}
+      <button class="btn-danger">Decline offer</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+<script>
+function countdown(iso) {
+  const end = new Date(iso);
+  return {
+    left: "",
+    tick() {
+      const ms = end - new Date();
+      if (ms <= 0) { this.left = "expired"; return; }
+      const h = Math.floor(ms / 3.6e6), m = Math.floor((ms % 3.6e6) / 6e4);
+      this.left = `${h}h ${m}m`;
+      setTimeout(() => this.tick(), 30000);
+    },
+  };
+}
+</script>
+{% endblock %}

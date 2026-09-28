@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "apps.matching",
     "apps.contracts",
     "apps.integrations",
+    "apps.offers",
+    "apps.payments",
 ]
 
 MIDDLEWARE = [
@@ -160,3 +162,28 @@ FIELD_ENCRYPTION_KEYS = env.list("FIELD_ENCRYPTION_KEYS", default=[])
 # Instagram (Meta app credentials, used when INSTAGRAM_PROVIDER=graph)
 INSTAGRAM_APP_ID = env("INSTAGRAM_APP_ID", default="")
 INSTAGRAM_APP_SECRET = env("INSTAGRAM_APP_SECRET", default="")
+
+# Offers and payments
+# Hours a brand has to pay after a creator accepts, before the slot is released.
+BRAND_PAYMENT_HOURS = env.int("BRAND_PAYMENT_HOURS", default=120)
+RAZORPAY_KEY_ID = env("RAZORPAY_KEY_ID", default="")
+RAZORPAY_KEY_SECRET = env("RAZORPAY_KEY_SECRET", default="")
+RAZORPAY_WEBHOOK_SECRET = env("RAZORPAY_WEBHOOK_SECRET", default="")
+
+# Seller details printed on GST invoices
+PLATFORM_LEGAL_NAME = env("PLATFORM_LEGAL_NAME", default="CreatorBridge Private Limited")
+PLATFORM_GSTIN = env("PLATFORM_GSTIN", default="")
+PLATFORM_ADDRESS = env("PLATFORM_ADDRESS", default="")
+# GST state code of the platform's registration; decides CGST+SGST vs IGST.
+PLATFORM_STATE_CODE = env("PLATFORM_STATE_CODE", default="27")
+SAC_CODE = env("SAC_CODE", default="998361")  # Advertising services
+INVOICE_PREFIX = env("INVOICE_PREFIX", default="CB")
+
+# Scheduled jobs (Celery Beat). Deadlines live in the database, so a missed run just
+# gets picked up by the next one.
+CELERY_BEAT_SCHEDULE = {
+    "process-deadlines": {
+        "task": "apps.offers.tasks.process_deadlines",
+        "schedule": 300.0,
+    },
+}

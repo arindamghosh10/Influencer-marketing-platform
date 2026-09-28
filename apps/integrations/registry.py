@@ -14,6 +14,13 @@ PROVIDERS = {
             "graph": "apps.integrations.instagram.graph.GraphInstagram",
         },
     },
+    "payments": {
+        "setting": "PAYMENTS_PROVIDER",
+        "choices": {
+            "mock": "apps.payments.providers.MockPayments",
+            "razorpay": "apps.payments.providers.RazorpayPayments",
+        },
+    },
     "llm": {
         "setting": "LLM_PROVIDER",
         "choices": {

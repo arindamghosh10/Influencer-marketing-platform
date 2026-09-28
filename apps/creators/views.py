@@ -37,12 +37,42 @@ def _next_step(creator):
 @creator_required
 def dashboard(request):
     creator = _creator(request)
+    from apps.offers.models import Offer, Slot
+    from apps.offers.views_models import CreatorOfferView
+    from apps.payments.services import creator_earnings
+
     steps = services.onboarding_steps(creator)
+    pending = (
+        Offer.objects.filter(creator=creator, status=Offer.Status.PENDING, expires_at__gt=timezone.now())
+        .select_related("slot__campaign__brand")
+        .order_by("expires_at")
+    )
+    active = (
+        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED])
+        .select_related("campaign__brand")
+        .order_by("-accepted_at")
+    )
     context = {
         "creator": creator,
         "steps": steps,
         "next_step": _next_step(creator),
         "rate_band": services.suggested_rate_band(creator),
+        "offers": [CreatorOfferView.build(o) for o in pending],
+        "active_slots": [
+            {
+                "brand": s.campaign.brand.company_name,
+                "title": s.campaign.title,
+                "deliverable": s.campaign.get_deliverable_display(),
+                "fee": s.creator_fee,
+                "status": s.status,
+                "status_label": "Waiting for brand payment"
+                if s.status == Slot.Status.ACCEPTED
+                else "Payment secured: start creating",
+                "deadline": s.campaign.content_deadline,
+            }
+            for s in active
+        ],
+        "earnings": creator_earnings(creator),
     }
     return render(request, "creators/dashboard.html", context)
 

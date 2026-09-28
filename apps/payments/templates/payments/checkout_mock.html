@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-xl space-y-4">
+  <h1 class="text-2xl font-semibold">Pay for your campaign</h1>
+  {% include "payments/_order_summary.html" %}
+  <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Test mode: no real money moves. Set <code>PAYMENTS_PROVIDER=razorpay</code> with Razorpay keys to take real payments.</div>
+  <form method="post" action="{% url 'payments:confirm' order.pk %}">{% csrf_token %}
+    <input type="hidden" name="mock_confirm" value="{{ order.provider_order_id }}">
+    <button class="btn-primary w-full">Pay {{ order.total|inr }} (test)</button>
+  </form>
+</div>
+{% endblock %}

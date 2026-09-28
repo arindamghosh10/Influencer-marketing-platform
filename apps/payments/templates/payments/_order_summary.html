@@ -1,0 +1,15 @@
+{% load platform %}
+<div class="card">
+  <h2 class="mb-3 font-semibold">Order #{{ order.pk }} · {{ order.campaign.title }}</h2>
+  <table class="w-full text-sm">
+    <tbody>
+      {% for line in order.lines %}
+      <tr class="border-t border-slate-100"><td class="py-2">{{ line.creator }} <span class="text-slate-500">@{{ line.handle }} · {{ line.deliverable }}</span></td><td class="py-2 text-right">{{ line.amount|inr }}</td></tr>
+      {% endfor %}
+      <tr class="border-t border-slate-200"><td class="py-2">Subtotal</td><td class="py-2 text-right">{{ order.subtotal|inr }}</td></tr>
+      {% if order.igst %}<tr><td class="py-1">IGST 18%</td><td class="py-1 text-right">{{ order.igst|inr }}</td></tr>
+      {% else %}<tr><td class="py-1">CGST 9%</td><td class="py-1 text-right">{{ order.cgst|inr }}</td></tr><tr><td class="py-1">SGST 9%</td><td class="py-1 text-right">{{ order.sgst|inr }}</td></tr>{% endif %}
+      <tr class="border-t border-slate-200 text-base font-semibold"><td class="py-2">Total</td><td class="py-2 text-right">{{ order.total|inr }}</td></tr>
+    </tbody>
+  </table>
+</div>

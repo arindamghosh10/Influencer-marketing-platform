@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.conf import settings
 from django.db import transaction
 
@@ -37,6 +39,24 @@ def candidates_for(campaign):
         .select_related("primary_niche__parent")
         .prefetch_related("niches")
     )
+    from django.db.models import Count
+
+    from apps.offers.models import Offer, Slot
+
+    load = Counter(
+        dict(
+            Slot.objects.filter(status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED])
+            .values_list("creator_id")
+            .annotate(n=Count("id"))
+        )
+    )
+    load.update(
+        dict(
+            Offer.objects.filter(status=Offer.Status.PENDING)
+            .values_list("creator_id")
+            .annotate(n=Count("id"))
+        )
+    )
     out = []
     for c in creators:
         slugs = {n.slug for n in c.niches.all()}
@@ -62,7 +82,7 @@ def candidates_for(campaign):
                 fee=c.rate_for(campaign.deliverable),
                 red_lines=c.red_lines,
                 allows_ai_likeness=c.allows_ai_likeness,
-                active_campaigns=0,  # filled from live slots once offers exist
+                active_campaigns=load.get(c.pk, 0),
                 max_active=c.max_active_campaigns,
                 on_break=c.on_break,
                 approved=True,

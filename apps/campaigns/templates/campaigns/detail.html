@@ -7,7 +7,7 @@
     <h1 class="mt-1 text-2xl font-semibold">{{ campaign.title }}</h1>
     <p class="text-sm text-slate-500">{{ campaign.get_objective_display }} · {{ campaign.get_deliverable_display }} · budget {{ campaign.budget|inr }} + GST</p>
   </div>
-  {% if campaign.status != "shortlisted" %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-secondary">Edit settings</a>{% endif %}
+  {% if not locked %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-secondary">Edit settings</a>{% endif %}
 </div>
 
 <ol class="mb-6 flex flex-wrap gap-1 text-xs">
@@ -21,9 +21,68 @@
   <p class="font-semibold text-brand-700">What happens next</p>
   {% if campaign.status == "brief_ready" %}<p class="mt-1">Check what we understood about your product below, fix anything that's off, then confirm. Creators only ever see the confirmed brief.</p>
   {% elif campaign.status == "brief_confirmed" %}<p class="mt-1">Review the recommended creators. Add or remove anyone, then confirm your selection. Backups are listed below in case someone declines.</p>
-  {% elif campaign.status == "shortlisted" %}<p class="mt-1">Your selection is saved. Next we send offers to these creators{% if campaign.brand.status != "approved" %}, as soon as your brand account is approved{% endif %}. Each creator has 48 hours to accept; if someone declines, we offer the slot to your backup.</p>
+  {% elif campaign.status == "shortlisted" %}<p class="mt-1">Your selection is saved. Send offers when you're ready. Each creator has 48 hours to accept; if someone declines or doesn't reply, we automatically offer the slot to your next backup.</p>
+  {% elif campaign.status == "offers_out" %}<p class="mt-1">Creators are reviewing your offer. As soon as someone accepts, pay for them to start production: you only ever pay for creators who accepted.</p>
+  {% elif campaign.status == "active" %}<p class="mt-1">Payment received and creators are working on your content. You'll review each draft before anything is posted.{% if payable %} New acceptances are waiting for payment below.{% endif %}</p>
   {% else %}<p class="mt-1">We're reading your product page.</p>{% endif %}
 </div>
+
+{% if campaign.status == "shortlisted" %}
+<div class="card mb-6">
+  <h2 class="font-semibold">Ready to send offers</h2>
+  {% for b in send_blockers %}<p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{{ b }}</p>{% endfor %}
+  <form method="post" action="{% url 'campaigns:send_offers' campaign.pk %}" class="mt-3">{% csrf_token %}
+    <button class="btn-primary" {% if send_blockers %}disabled{% endif %}>Send offers to {{ summary.count }} creator{{ summary.count|pluralize }}</button>
+  </form>
+</div>
+{% endif %}
+
+{% if slots %}
+<div class="mb-6 grid gap-6 lg:grid-cols-3">
+  <section class="card p-0 lg:col-span-2">
+    <h2 class="px-5 py-4 text-lg font-semibold">Creators</h2>
+    {% for s in slots %}
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm">
+      <div>
+        <p class="font-medium">{% if s.creator_name %}{{ s.creator_name }} <span class="text-slate-500">@{{ s.creator_handle }}</span>{% else %}Slot {{ s.position }}{% endif %}</p>
+        <p class="text-xs text-slate-500">
+          {% if s.status == "offering" %}Offer sent · replies within {{ s.offer_expires_at|timeuntil }}
+          {% elif s.status == "accepted" %}Accepted · pay within {{ s.payment_due_at|timeuntil }} to keep this creator
+          {% elif s.status == "unfilled" %}No creator available · you won't be charged
+          {% else %}{{ s.status_label }}{% endif %}
+          {% if s.replaced %}<br>Tried before: {{ s.replaced|join:", " }}{% endif %}
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        {% if s.price %}<span class="font-semibold">{{ s.price|inr }}</span>{% endif %}
+        <span class="{% if s.status == 'confirmed' %}badge-green{% elif s.status == 'accepted' %}badge-indigo{% elif s.status == 'offering' %}badge-amber{% else %}badge-gray{% endif %}">{{ s.status_label }}</span>
+        {% if s.cancellable %}<form method="post" action="{% url 'campaigns:cancel_slot' campaign.pk s.id %}" onsubmit="return confirm('Remove this creator from the campaign?')">{% csrf_token %}<button class="link text-xs">Remove</button></form>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  <aside class="space-y-4">
+    {% if payable %}
+    <div class="card border-brand-200">
+      <h3 class="font-semibold">Ready to pay</h3>
+      <dl class="mt-2 space-y-1 text-sm">
+        <div class="flex justify-between"><dt>{{ payable.count }} accepted creator{{ payable.count|pluralize }}</dt><dd>{{ payable.subtotal|inr }}</dd></div>
+        <div class="flex justify-between"><dt>GST (18%)</dt><dd>{{ payable.gst|inr }}</dd></div>
+        <div class="flex justify-between border-t border-slate-100 pt-1 font-semibold"><dt>Total</dt><dd>{{ payable.total|inr }}</dd></div>
+      </dl>
+      <form method="post" action="{% url 'payments:start' campaign.pk %}" class="mt-3">{% csrf_token %}<button class="btn-primary w-full">Review order and pay</button></form>
+      <p class="mt-2 text-xs text-slate-500">Creators start once payment is secured. They're paid only after their post is verified live.</p>
+    </div>
+    {% endif %}
+    {% if orders %}
+    <div class="card">
+      <h3 class="mb-2 font-semibold">Invoices</h3>
+      {% for o in orders %}<div class="flex justify-between py-1 text-sm"><a class="link" href="{% url 'payments:invoice' o.pk %}">{{ o.invoice_number }}</a><span>{{ o.total|inr }}</span></div>{% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endif %}
 
 <div class="grid gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
@@ -70,7 +129,7 @@
     </section>
     {% endif %}
 
-    {% if run %}
+    {% if run and not slots %}
     <section class="card p-0">
       <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
         <div>
@@ -99,7 +158,7 @@
   </div>
 
   <aside class="space-y-6">
-    {% if summary %}
+    {% if summary and not slots %}
       {% include "campaigns/partials/summary.html" %}
       {% if campaign.status == "brief_confirmed" %}
       <form method="post" action="{% url 'campaigns:confirm_selection' campaign.pk %}">{% csrf_token %}<button class="btn-primary w-full">Confirm selection</button></form>

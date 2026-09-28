@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="mb-4 text-2xl font-semibold">Ops overview</h1>
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-semibold">Ops overview</h1>
+  <form method="post" action="{% url 'core:run_jobs' %}">{% csrf_token %}<button class="btn-secondary" title="Normally runs every 5 minutes via Celery Beat">Run scheduled jobs now</button></form>
+</div>
 <div class="mb-6 grid gap-4 sm:grid-cols-3">
   <div class="stat"><p class="stat-label">Approved creators</p><p class="stat-value">{{ counts.creators_approved }}</p></div>
   <div class="stat"><p class="stat-label">Approved brands</p><p class="stat-value">{{ counts.brands_approved }}</p></div>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-xl space-y-4">
+  <h1 class="text-2xl font-semibold">Pay for your campaign</h1>
+  {% include "payments/_order_summary.html" %}
+  <p class="text-sm text-slate-500">UPI, cards, net banking and wallets, processed securely by Razorpay.</p>
+  <button id="pay" class="btn-primary w-full">Pay {{ order.total|inr }}</button>
+  <form id="confirm" method="post" action="{% url 'payments:confirm' order.pk %}" class="hidden">{% csrf_token %}
+    <input type="hidden" name="razorpay_payment_id">
+    <input type="hidden" name="razorpay_order_id">
+    <input type="hidden" name="razorpay_signature">
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const rzp = new Razorpay({
+    key: "{{ razorpay_key_id }}",
+    amount: "{{ order.total }}",
+    currency: "INR",
+    name: "{{ PLATFORM_NAME|escapejs }}",
+    description: "Order #{{ order.pk }}",
+    order_id: "{{ order.provider_order_id }}",
+    prefill: { email: "{{ user.email|escapejs }}" },
+    handler: function (response) {
+      const form = document.getElementById("confirm");
+      for (const key of ["razorpay_payment_id", "razorpay_order_id", "razorpay_signature"]) {
+        form.elements[key].value = response[key];
+      }
+      form.submit();
+    },
+  });
+  document.getElementById("pay").addEventListener("click", (e) => { e.preventDefault(); rzp.open(); });
+</script>
+{% endblock %}

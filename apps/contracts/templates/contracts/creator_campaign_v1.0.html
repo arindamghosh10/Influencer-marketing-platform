@@ -1,0 +1,28 @@
+<p class="text-xs uppercase tracking-wide text-amber-700">Draft v1.0: to be reviewed by a lawyer before launch.</p>
+<h2>Campaign Agreement</h2>
+<p>Under the Creator Platform Agreement between <strong>{{ platform_name }}</strong> ("the Platform") and <strong>{{ legal_name }}</strong> (Instagram <strong>@{{ ig_username }}</strong>, "the Creator"), dated {{ today }}.</p>
+
+<h3>1. Campaign</h3>
+<ul>
+  <li>Brand: <strong>{{ brand_name }}</strong>. Campaign: <strong>{{ campaign_title }}</strong>. Product: {{ product_name }}.</li>
+  <li>Deliverable: <strong>1 × {{ deliverable }}</strong> on the Creator's Instagram account, made by the Creator{% if ai_likeness %}, with AI assistance using the Creator's likeness, which the Creator approves before posting{% endif %}.</li>
+  {% if content_deadline %}<li>Draft content due by <strong>{{ content_deadline }}</strong>.</li>{% endif %}
+  {% if must_say %}<li>Must mention: {{ must_say }}</li>{% endif %}
+  {% if must_not_say %}<li>Must not mention: {{ must_not_say }}</li>{% endif %}
+  {% if risky_claims %}<li>Do not make these claims: {{ risky_claims|join:"; " }}.</li>{% endif %}
+</ul>
+
+<h3>2. Fee</h3>
+<p>The Platform pays the Creator a fee of <strong>{{ fee }}</strong>{% if creator_gst %} plus GST of {{ creator_gst }}{% endif %}, less TDS of {{ tds_rate }} ({{ tds }}), for a net payment of <strong>{{ net }}</strong>. The fee is paid after the post has stayed live and unedited for {{ verification_days }} days following publication.</p>
+
+<h3>3. Approval and disclosure</h3>
+<p>The brand may request up to two rounds of changes. The final content is published only after the Creator approves the exact video and caption. The caption must include a clear paid-partnership disclosure, which must not be removed.</p>
+
+<h3>4. Posting period</h3>
+<p>The post stays live for at least <strong>{{ min_live_days }} days</strong>. If it is removed or edited to remove the disclosure earlier, the Platform may withhold or recover the fee.</p>
+
+<h3>5. Usage rights</h3>
+<p>The Creator grants the brand and the Platform the right to repost the content on their own channels{% if paid_ads %} and to use it in paid social media ads{% endif %} for <strong>{{ usage_rights_days }} days</strong> from publication, in India. {% if paid_ads %}The Creator will grant the brand partner access in the Instagram app when asked, to run these ads.{% endif %} Any use after this period needs a new agreement and fee.</p>
+
+<h3>6. Cancellation</h3>
+<p>If the brand cancels before the Creator starts, the Creator owes nothing. If the Creator can't deliver, they must tell the Platform as soon as possible; no fee is payable for undelivered content.</p>

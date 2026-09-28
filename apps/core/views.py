@@ -29,6 +29,22 @@ def notifications(request):
 
 
 @ops_required
+def run_jobs(request):
+    from django.contrib import messages
+
+    from apps.offers.services import process_deadlines
+
+    if request.method == "POST":
+        result = process_deadlines()
+        messages.success(
+            request,
+            f"Scheduled jobs ran: {result['expired_offers']} offers expired, "
+            f"{result['released_slots']} unpaid slots released.",
+        )
+    return redirect("core:ops")
+
+
+@ops_required
 def ops_dashboard(request):
     from apps.brands.models import BrandProfile
     from apps.campaigns.models import Campaign

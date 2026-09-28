@@ -1,0 +1,28 @@
+<p class="text-xs uppercase tracking-wide text-amber-700">Draft v1.0: to be reviewed by a lawyer before launch.</p>
+<h2>Campaign Order</h2>
+<p>Order #{{ order_id }} under the Brand Platform Agreement between <strong>{{ platform_name }}</strong> and <strong>{{ company_name }}</strong>{% if gstin %} (GSTIN {{ gstin }}){% endif %}, dated {{ today }}.</p>
+
+<h3>1. Services ordered</h3>
+<p>Campaign <strong>{{ campaign_title }}</strong>: one {{ deliverable }} by each creator below, published on the creator's Instagram account with a paid-partnership disclosure.</p>
+<table class="w-full text-left text-sm">
+  <thead><tr><th class="py-1">Creator</th><th class="py-1 text-right">Price</th></tr></thead>
+  <tbody>
+    {% for line in lines %}<tr><td class="py-1">{{ line.creator }} (@{{ line.handle }})</td><td class="py-1 text-right">{{ line.amount_display }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+<p>Subtotal <strong>{{ subtotal }}</strong> + GST {{ gst }} = <strong>{{ total }}</strong>, payable now.</p>
+
+<h3>2. Content and approvals</h3>
+<p>Content follows the confirmed product brief. The Brand may request up to two rounds of changes per deliverable; content not reviewed within {{ brand_review_hours }} hours of submission is treated as approved. The creator also approves the final content before it is published.</p>
+
+<h3>3. Usage rights</h3>
+<p>The Brand may repost the content on its own channels{% if paid_ads %} and use it in paid social media ads{% endif %} for <strong>{{ usage_rights_days }} days</strong> from publication, in India.</p>
+
+<h3>4. Replacements and refunds</h3>
+<ul>
+  <li>If a creator doesn't deliver, the Platform offers a comparable replacement or refunds that creator's price and GST.</li>
+  <li>After content is delivered and approved, the order is non-refundable except where the content fails the agreed brief.</li>
+</ul>
+
+<h3>5. Results</h3>
+<p>Reach and engagement figures shown before purchase are estimates, not guarantees.</p>

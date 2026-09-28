@@ -9,6 +9,8 @@ urlpatterns = [
     path("brand/", include("apps.brands.urls")),
     path("creator/", include("apps.creators.urls")),
     path("brand/campaigns/", include("apps.campaigns.urls")),
+    path("creator/offers/", include("apps.offers.urls")),
+    path("payments/", include("apps.payments.urls")),
     path("contracts/", include("apps.contracts.urls")),
     path("", include("apps.core.urls")),
 ]

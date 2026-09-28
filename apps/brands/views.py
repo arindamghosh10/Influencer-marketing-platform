@@ -32,6 +32,10 @@ def dashboard(request):
             actions.append((c, "Review and confirm the product brief"))
         elif c.status == c.Status.BRIEF_CONFIRMED:
             actions.append((c, "Pick your creators"))
+        elif c.status == c.Status.SHORTLISTED:
+            actions.append((c, "Send offers to your selected creators"))
+        elif c.slots.filter(status="accepted").exists():
+            actions.append((c, "Creators accepted: pay to start production"))
     return render(
         request,
         "brands/dashboard.html",

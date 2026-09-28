@@ -19,7 +19,10 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 | Matching: hard filters, weighted scoring, budget-aware selection, tier mix, backups, explanations, "not enough creators" state | ✅ |
 | Pricing: brand price = creator fee ÷ (1 − margin), GST; brand pages never receive creator fees | ✅ |
 | Ops: review queue, approve/reject/KYC actions in admin, audit log | ✅ |
-| Offers, payments, content approvals, publishing, verification, payouts | Next |
+| Offers: send to selected creators, accept via e-signed campaign agreement, decline with reason, 48h expiry, automatic backup offers within budget, "unfilled" when backups run out | ✅ |
+| Payments: pay only for accepted creators, e-signed campaign order, mock or Razorpay checkout (signature-verified), idempotent webhooks with amount check, GST invoice (CGST+SGST or IGST) with gap-free numbering | ✅ |
+| Payouts: held per creator with TDS (1% individual / 2% others) and GST if registered; ops marks paid with UTR | ✅ (release after verification comes with publishing) |
+| Content approvals, publishing, 7-day verification | Next |
 
 ## Run it locally
 
@@ -58,6 +61,9 @@ uv run ruff check . && uv run ruff format --check .
 |---|---|
 | `LLM_PROVIDER` | `rules` (free, offline) · `gemini` (set `GEMINI_API_KEY`; free tier is rate-limited and Google may use free-tier prompts to improve its models) |
 | `INSTAGRAM_PROVIDER` | `mock` (demo stats) · `graph` (Meta app with approved Instagram permissions) |
+| `PAYMENTS_PROVIDER` | `mock` (test-mode button) · `razorpay` (set key id/secret and webhook secret; use Razorpay test keys first) |
+
+Background jobs: offer expiry and unpaid-slot release run every 5 minutes via Celery Beat (`celery -A config worker -B`), or manually with `python manage.py run_deadlines` or the "Run scheduled jobs now" button on the ops page.
 
 If Gemini fails or runs out of quota, the app automatically falls back to the rule-based brief.
 
@@ -73,6 +79,8 @@ apps/brands        brand profile, onboarding, domain verification
 apps/contracts     agreements, OTP signing, consent ledger
 apps/campaigns     campaigns, product briefs
 apps/matching      matching engine (pure Python) + persistence
+apps/offers        slots, offers, backups, deadlines job
+apps/payments      orders, Razorpay/mock checkout, webhooks, GST invoices, payouts with TDS
 apps/integrations  adapters: Instagram (mock/graph), LLM (rules/Gemini), SSRF-safe fetch
 tests/             pytest suite
 ```

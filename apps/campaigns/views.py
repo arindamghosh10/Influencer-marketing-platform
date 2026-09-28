@@ -29,7 +29,58 @@ STAGE_OF_STATUS = {
     Campaign.Status.BRIEF_READY: "brief",
     Campaign.Status.BRIEF_CONFIRMED: "creators",
     Campaign.Status.SHORTLISTED: "offers",
+    Campaign.Status.OFFERS_OUT: "offers",
+    Campaign.Status.ACTIVE: "content",
 }
+# Once creators are chosen, the brief and settings are frozen: creators accept based on them.
+LOCKED = {
+    Campaign.Status.SHORTLISTED,
+    Campaign.Status.OFFERS_OUT,
+    Campaign.Status.ACTIVE,
+    Campaign.Status.CANCELLED,
+}
+
+
+def brand_slots(campaign):
+    """Brand-facing slot rows. Only brand prices are exposed."""
+    from apps.offers.models import Offer, Slot
+
+    rows = []
+    for slot in campaign.slots.prefetch_related("offers__creator"):
+        offer = slot.current_offer
+        creator = slot.creator or (offer.creator if offer else None)
+        price = slot.brand_price or (offer.brand_price if offer else 0)
+        tried = [o for o in slot.offers.all() if o.status in (Offer.Status.DECLINED, Offer.Status.EXPIRED)]
+        rows.append(
+            {
+                "id": slot.pk,
+                "position": slot.position,
+                "status": slot.status,
+                "status_label": slot.get_status_display(),
+                "creator_name": creator.display_name if creator else "",
+                "creator_handle": creator.ig_username if creator else "",
+                "price": price if slot.status != Slot.Status.UNFILLED else 0,
+                "offer_expires_at": offer.expires_at
+                if offer and offer.status == Offer.Status.PENDING
+                else None,
+                "payment_due_at": slot.payment_due_at if slot.status == Slot.Status.ACCEPTED else None,
+                "replaced": [f"{o.creator.display_name} ({o.get_status_display().lower()})" for o in tried],
+                "cancellable": slot.status in (Slot.Status.OFFERING, Slot.Status.ACCEPTED),
+            }
+        )
+    return rows
+
+
+def _payable_summary(campaign):
+    from apps.payments.services import payable_slots
+    from apps.payments.tax import gst_split
+
+    slots = list(payable_slots(campaign))
+    if not slots:
+        return None
+    subtotal = sum(s.brand_price for s in slots)
+    tax = gst_split(subtotal, campaign.brand.gstin).total
+    return {"count": len(slots), "subtotal": subtotal, "gst": tax, "total": subtotal + tax}
 
 
 def _campaign(request, pk):
@@ -107,14 +158,60 @@ def detail(request, pk):
         "stage": STAGE_OF_STATUS.get(campaign.status, "brief"),
         "events": events_for(campaign)[:30],
         "editable": campaign.status == Campaign.Status.BRIEF_CONFIRMED,
+        "locked": campaign.status in LOCKED,
     }
+    if campaign.status == Campaign.Status.SHORTLISTED:
+        from apps.offers.services import send_blockers
+
+        context["send_blockers"] = send_blockers(campaign)
+    if campaign.status in (Campaign.Status.OFFERS_OUT, Campaign.Status.ACTIVE):
+        from apps.payments.models import Order
+
+        context["slots"] = brand_slots(campaign)
+        context["payable"] = _payable_summary(campaign)
+        context["orders"] = campaign.orders.filter(status=Order.Status.PAID)
     return render(request, "campaigns/detail.html", context)
+
+
+@brand_required
+@require_POST
+def send_offers(request, pk):
+    from apps.offers import services as offers
+
+    campaign = _campaign(request, pk)
+    try:
+        slots = offers.send_offers(campaign, request.user)
+    except offers.OfferError as exc:
+        messages.error(request, str(exc))
+        return redirect("campaigns:detail", pk=pk)
+    messages.success(
+        request,
+        f"Offers sent to {len(slots)} creators. They have {settings.OFFER_EXPIRY_HOURS} hours to reply; "
+        "we'll notify you as they do.",
+    )
+    return redirect("campaigns:detail", pk=pk)
+
+
+@brand_required
+@require_POST
+def cancel_slot(request, pk, slot_id):
+    from apps.offers import services as offers
+    from apps.offers.models import Slot
+
+    campaign = _campaign(request, pk)
+    slot = get_object_or_404(Slot, pk=slot_id, campaign=campaign)
+    try:
+        offers.cancel_slot(slot, request.user)
+        messages.info(request, "Removed. You won't be charged for this creator.")
+    except offers.OfferError as exc:
+        messages.error(request, str(exc))
+    return redirect("campaigns:detail", pk=pk)
 
 
 @brand_required
 def edit(request, pk):
     campaign = _campaign(request, pk)
-    if campaign.status == Campaign.Status.SHORTLISTED:
+    if campaign.status in LOCKED:
         messages.warning(request, "Creators are already selected; settings can't change now.")
         return redirect("campaigns:detail", pk=pk)
     form = CampaignForm(request.POST or None, request.FILES or None, instance=campaign)
@@ -141,7 +238,7 @@ def edit(request, pk):
 def edit_brief(request, pk):
     campaign = _campaign(request, pk)
     brief = campaign.current_brief
-    if brief is None or campaign.status == Campaign.Status.SHORTLISTED:
+    if brief is None or campaign.status in LOCKED:
         return redirect("campaigns:detail", pk=pk)
     form = BriefEditForm.from_brief(brief.data, request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -155,7 +252,7 @@ def edit_brief(request, pk):
 @require_POST
 def regenerate_brief(request, pk):
     campaign = _campaign(request, pk)
-    if campaign.status != Campaign.Status.SHORTLISTED:
+    if campaign.status not in LOCKED:
         services.generate_brief(campaign, actor=request.user)
         messages.info(request, "We re-read your product page.")
     return redirect("campaigns:detail", pk=pk)
@@ -242,7 +339,5 @@ def confirm_selection(request, pk):
         data={"subtotal": summary["subtotal"]},
         request=request,
     )
-    messages.success(
-        request, "Creators selected. Next, we'll send them offers once your account is approved."
-    )
+    messages.success(request, "Creators selected. Send them offers when you're ready.")
     return redirect("campaigns:detail", pk=pk)

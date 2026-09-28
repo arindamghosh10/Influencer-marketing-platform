@@ -24,7 +24,19 @@ from .models import Agreement, AgreementKind, ConsentEvent, ConsentScope, OneTim
 CURRENT_VERSIONS = {
     AgreementKind.CREATOR_PLATFORM: "1.0",
     AgreementKind.BRAND_PLATFORM: "1.0",
+    AgreementKind.CREATOR_CAMPAIGN: "1.0",
+    AgreementKind.BRAND_ORDER: "1.0",
 }
+
+
+def latest_campaign_agreement(user, kind, campaign, since):
+    """The agreement this user signed for `campaign` after `since` (e.g. after an offer was made)."""
+    return (
+        Agreement.objects.filter(user=user, kind=kind, campaign=campaign, signed_at__gte=since)
+        .order_by("-signed_at")
+        .first()
+    )
+
 
 SESSION_KEY = "pending_agreement"
 OTP_TTL = timedelta(minutes=10)

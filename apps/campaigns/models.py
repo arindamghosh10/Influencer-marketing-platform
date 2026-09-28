@@ -11,6 +11,8 @@ class Campaign(TimeStampedModel):
         BRIEF_READY = "brief_ready", "Brief ready to review"
         BRIEF_CONFIRMED = "brief_confirmed", "Brief confirmed"
         SHORTLISTED = "shortlisted", "Creators selected"
+        OFFERS_OUT = "offers_out", "Offers sent"
+        ACTIVE = "active", "In production"
         CANCELLED = "cancelled", "Cancelled"
 
     class Objective(models.TextChoices):
@@ -52,6 +54,11 @@ class Campaign(TimeStampedModel):
     content_deadline = models.DateField(null=True, blank=True)
     # Copied from settings at creation so later changes don't reprice live campaigns.
     margin_bps = models.PositiveIntegerField()
+    # Campaigns in sensitive categories need an ops sign-off before offers go out.
+    ops_approved_at = models.DateTimeField(null=True, blank=True)
+    ops_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
 
     class Meta:
         ordering = ["-created_at"]

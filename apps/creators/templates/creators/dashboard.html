@@ -23,12 +23,36 @@
 <div class="card mb-6 border-rose-200 bg-rose-50"><p class="font-semibold text-rose-700">Our team asked for changes</p><p class="mt-1 text-sm">{{ creator.review_note }}</p></div>
 {% endif %}
 
-<div class="mb-6 grid gap-4 sm:grid-cols-4">
-  <div class="stat"><p class="stat-label">Available to withdraw</p><p class="stat-value">₹0</p></div>
-  <div class="stat"><p class="stat-label">Pending (in verification)</p><p class="stat-value">₹0</p></div>
-  <div class="stat"><p class="stat-label">Paid this month</p><p class="stat-value">₹0</p></div>
-  <div class="stat"><p class="stat-label">Active campaigns</p><p class="stat-value">0</p></div>
+{% if offers %}
+<div class="card mb-6 border-amber-200">
+  <h2 class="mb-2 font-semibold">New offers ({{ offers|length }})</h2>
+  {% for o in offers %}
+  <a href="{% url 'offers:detail' o.id %}" class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 py-3 text-sm hover:bg-slate-50">
+    <span><strong>{{ o.brand_name }}</strong> · {{ o.deliverable }}<br><span class="text-xs text-slate-500">Reply within {{ o.expires_at|timeuntil }}</span></span>
+    <span class="text-right"><span class="block font-semibold">{{ o.fee|inr }}</span><span class="text-xs text-slate-500">you receive {{ o.net|inr }}</span></span>
+  </a>
+  {% endfor %}
 </div>
+{% endif %}
+
+<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+  <div class="stat"><p class="stat-label">Ready to pay out</p><p class="stat-value">{{ earnings.releasable|inr }}</p></div>
+  <div class="stat"><p class="stat-label" title="Paid to you after your post has been live for 7 days">Pending ⓘ</p><p class="stat-value">{{ earnings.held|inr }}</p></div>
+  <div class="stat"><p class="stat-label">Paid this month</p><p class="stat-value">{{ earnings.paid_month|inr }}</p></div>
+  <div class="stat"><p class="stat-label">Active campaigns</p><p class="stat-value">{{ active_slots|length }}</p></div>
+</div>
+
+{% if active_slots %}
+<div class="card mb-6">
+  <h2 class="mb-2 font-semibold">Your campaigns</h2>
+  {% for s in active_slots %}
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 py-3 text-sm">
+    <span><strong>{{ s.brand }}</strong> · {{ s.title }}<br><span class="text-xs text-slate-500">{{ s.deliverable }}{% if s.deadline %} · due {{ s.deadline|date:"d M" }}{% endif %}</span></span>
+    <span class="flex items-center gap-2"><span class="font-semibold">{{ s.fee|inr }}</span><span class="{% if s.status == 'confirmed' %}badge-green{% else %}badge-amber{% endif %}">{{ s.status_label }}</span></span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 <div class="grid gap-6 lg:grid-cols-2">
   <div class="card">
@@ -56,8 +80,10 @@
   </div>
 </div>
 
+{% if not offers %}
 <div class="card mt-6">
   <h2 class="mb-2 font-semibold">Offers</h2>
   <p class="text-sm text-slate-500">{% if creator.status == "approved" %}No offers right now. We'll notify you on email and here when a brand that fits you is ready.{% else %}Offers start once your profile is approved.{% endif %}</p>
 </div>
+{% endif %}
 {% endblock %}

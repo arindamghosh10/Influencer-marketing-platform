@@ -8,4 +8,5 @@ urlpatterns = [
     path("home/", views.home, name="home"),
     path("notifications/", views.notifications, name="notifications"),
     path("ops/", views.ops_dashboard, name="ops"),
+    path("ops/run-jobs/", views.run_jobs, name="run_jobs"),
 ]
