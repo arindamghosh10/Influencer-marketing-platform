@@ -13,6 +13,7 @@ class Campaign(TimeStampedModel):
         SHORTLISTED = "shortlisted", "Creators selected"
         OFFERS_OUT = "offers_out", "Offers sent"
         ACTIVE = "active", "In production"
+        COMPLETED = "completed", "Completed"
         CANCELLED = "cancelled", "Cancelled"
 
     class Objective(models.TextChoices):

@@ -42,7 +42,7 @@ def send_blockers(campaign):
 
 def committed_amount(campaign, exclude_slot=None):
     """Brand price already promised to creators (pending offers + accepted/paid slots)."""
-    slots = campaign.slots.filter(status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED])
+    slots = campaign.slots.filter(status__in=Slot.COMMITTED)
     pending = Offer.objects.filter(slot__campaign=campaign, status=Offer.Status.PENDING)
     if exclude_slot is not None:
         slots = slots.exclude(pk=exclude_slot.pk)
@@ -55,7 +55,7 @@ def committed_amount(campaign, exclude_slot=None):
 def active_load(creator):
     """Campaigns a creator is committed to or has open offers for."""
     return (
-        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED]).count()
+        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, *Slot.IN_PROGRESS]).count()
         + Offer.objects.filter(creator=creator, status=Offer.Status.PENDING).count()
     )
 
@@ -296,4 +296,10 @@ def release_unpaid(now=None):
 
 
 def process_deadlines(now=None):
-    return {"expired_offers": expire_offers(now), "released_slots": release_unpaid(now)}
+    """Everything time-based: offers, payments, reviews, publishing, verification."""
+    from apps.content.services import run_due
+
+    now = now or timezone.now()
+    result = {"expired_offers": expire_offers(now), "released_slots": release_unpaid(now)}
+    result.update(run_due(now))
+    return result

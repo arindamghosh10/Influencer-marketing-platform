@@ -11,14 +11,33 @@ class Slot(TimeStampedModel):
         OFFERING = "offering", "Offer sent"
         ACCEPTED = "accepted", "Accepted, awaiting payment"
         CONFIRMED = "confirmed", "Paid, in production"
+        IN_REVIEW = "in_review", "Draft with brand for review"
+        CHANGES_REQUESTED = "changes_requested", "Changes requested"
+        APPROVED = "approved", "Brand approved, waiting for creator's final OK"
+        SCHEDULED = "scheduled", "Scheduled to publish"
+        SELF_POST = "self_post", "Waiting for creator to post"
+        LIVE = "live", "Live, in verification"
+        VERIFIED = "verified", "Verified, payout released"
+        ON_HOLD = "on_hold", "On hold: post missing or edited"
         UNFILLED = "unfilled", "No creator available"
         CANCELLED = "cancelled", "Cancelled"
 
-    ACTIVE = (Status.OFFERING, Status.ACCEPTED, Status.CONFIRMED)
+    # Paid and not finished: counts toward a creator's workload.
+    IN_PROGRESS = (
+        Status.CONFIRMED,
+        Status.IN_REVIEW,
+        Status.CHANGES_REQUESTED,
+        Status.APPROVED,
+        Status.SCHEDULED,
+        Status.SELF_POST,
+        Status.LIVE,
+        Status.ON_HOLD,
+    )
+    COMMITTED = (Status.ACCEPTED, *IN_PROGRESS, Status.VERIFIED)
 
     campaign = models.ForeignKey("campaigns.Campaign", on_delete=models.CASCADE, related_name="slots")
     position = models.PositiveSmallIntegerField()
-    status = models.CharField(max_length=12, choices=Status.choices, default=Status.OFFERING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OFFERING)
     creator = models.ForeignKey(
         "creators.CreatorProfile", null=True, blank=True, on_delete=models.PROTECT, related_name="slots"
     )
@@ -30,6 +49,10 @@ class Slot(TimeStampedModel):
     order = models.ForeignKey(
         "payments.Order", null=True, blank=True, on_delete=models.SET_NULL, related_name="slots"
     )
+    # Content stage
+    creator_brief = models.JSONField(default=dict, blank=True, help_text="Hooks, script, shot list")
+    revisions_used = models.PositiveSmallIntegerField(default=0)
+    review_due_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["position"]

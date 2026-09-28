@@ -36,11 +36,8 @@ def run_jobs(request):
 
     if request.method == "POST":
         result = process_deadlines()
-        messages.success(
-            request,
-            f"Scheduled jobs ran: {result['expired_offers']} offers expired, "
-            f"{result['released_slots']} unpaid slots released.",
-        )
+        summary = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in result.items())
+        messages.success(request, f"Scheduled jobs ran. {summary}.")
     return redirect("core:ops")
 
 

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <a href="{% url 'campaigns:detail' campaign.pk %}" class="link text-sm">← {{ campaign.title }}</a>
+  <div class="mb-4 mt-2 flex flex-wrap items-center justify-between gap-2">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ slot.creator.display_name }} <span class="text-base font-normal text-slate-500">@{{ slot.creator.ig_username }}</span></h1>
+      <p class="text-sm text-slate-500">{{ campaign.get_deliverable_display }} · {{ slot.brand_price|inr }} + GST</p>
+    </div>
+    <span class="badge-indigo">{{ slot.get_status_display }}</span>
+  </div>
+
+  {% include "content/_post.html" %}
+
+  {% if latest %}
+  <div class="card mt-6 space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="font-semibold">{% if can_review %}Review this draft{% else %}Latest version{% endif %}</h2>
+      {% if can_review %}<span class="text-xs text-slate-500">Reply by {{ slot.review_due_at|date:"d M, H:i" }} or it's approved automatically · {{ revisions_left }} revision round{{ revisions_left|pluralize }} left</span>{% endif %}
+    </div>
+    {% include "content/_asset.html" with asset=latest show_media=True %}
+    {% if can_review %}
+    <form method="post" action="{% url 'content:review_action' campaign.pk slot.id %}" class="space-y-3" x-data="{ decision: 'approved' }">{% csrf_token %}
+      <div class="flex flex-wrap gap-3 text-sm">
+        <label class="flex items-center gap-2"><input type="radio" name="decision" value="approved" x-model="decision"> Approve</label>
+        <label class="flex items-center gap-2 {% if not revisions_left %}opacity-50{% endif %}"><input type="radio" name="decision" value="changes" x-model="decision" {% if not revisions_left %}disabled{% endif %}> Request changes</label>
+      </div>
+      <div x-show="decision === 'changes'" x-cloak>{% include "partials/field.html" with field=form.comment %}</div>
+      <button class="btn-primary" x-text="decision === 'approved' ? 'Approve draft' : 'Send feedback'">Approve draft</button>
+      <p class="text-xs text-slate-500">After you approve, the creator gives a final OK and picks the go-live time. It's never posted without both approvals.</p>
+    </form>
+    {% endif %}
+  </div>
+  {% elif slot.status == "confirmed" %}
+  <div class="card mt-6 text-sm text-slate-600">{{ slot.creator.display_name }} is creating the content{% if campaign.content_deadline %}, due {{ campaign.content_deadline|date:"d M Y" }}{% endif %}. You'll be notified when the draft arrives.</div>
+  {% endif %}
+
+  {% if assets|length > 1 %}
+  <details class="card mt-6"><summary class="cursor-pointer font-semibold">Earlier versions</summary>
+    <div class="mt-3 space-y-3">{% for asset in assets %}{% if asset.id != latest.id %}{% include "content/_asset.html" with show_media=False %}{% endif %}{% endfor %}</div>
+  </details>
+  {% endif %}
+</div>
+{% endblock %}

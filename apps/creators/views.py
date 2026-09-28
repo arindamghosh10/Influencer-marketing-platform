@@ -19,6 +19,20 @@ from .models import CreatorProfile
 
 STEPS = ["profile", "instagram", "rates", "kyc", "agreement"]
 
+# Creator-facing wording for campaign slots on the dashboard.
+ACTIVE_LABELS = {
+    "accepted": "Waiting for brand payment",
+    "confirmed": "Payment secured: start creating",
+    "in_review": "Brand is reviewing your draft",
+    "changes_requested": "Changes requested",
+    "approved": "Approved: give your final OK",
+    "scheduled": "Scheduled to go live",
+    "self_post": "Post it and share the link",
+    "live": "Live: in verification",
+    "on_hold": "Post missing: please restore",
+}
+NEEDS_CREATOR_ACTION = {"confirmed", "changes_requested", "approved", "self_post", "on_hold"}
+
 
 def _creator(request):
     creator, _ = CreatorProfile.objects.get_or_create(
@@ -48,7 +62,7 @@ def dashboard(request):
         .order_by("expires_at")
     )
     active = (
-        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED])
+        Slot.objects.filter(creator=creator, status__in=[Slot.Status.ACCEPTED, *Slot.IN_PROGRESS])
         .select_related("campaign__brand")
         .order_by("-accepted_at")
     )
@@ -65,9 +79,9 @@ def dashboard(request):
                 "deliverable": s.campaign.get_deliverable_display(),
                 "fee": s.creator_fee,
                 "status": s.status,
-                "status_label": "Waiting for brand payment"
-                if s.status == Slot.Status.ACCEPTED
-                else "Payment secured: start creating",
+                "status_label": ACTIVE_LABELS.get(s.status, s.get_status_display()),
+                "url": reverse("content:workspace", args=[s.pk]) if s.status != Slot.Status.ACCEPTED else "",
+                "needs_action": s.status in NEEDS_CREATOR_ACTION,
                 "deadline": s.campaign.content_deadline,
             }
             for s in active

@@ -47,8 +47,8 @@
   <h2 class="mb-2 font-semibold">Your campaigns</h2>
   {% for s in active_slots %}
   <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 py-3 text-sm">
-    <span><strong>{{ s.brand }}</strong> · {{ s.title }}<br><span class="text-xs text-slate-500">{{ s.deliverable }}{% if s.deadline %} · due {{ s.deadline|date:"d M" }}{% endif %}</span></span>
-    <span class="flex items-center gap-2"><span class="font-semibold">{{ s.fee|inr }}</span><span class="{% if s.status == 'confirmed' %}badge-green{% else %}badge-amber{% endif %}">{{ s.status_label }}</span></span>
+    <span>{% if s.url %}<a class="link font-semibold" href="{{ s.url }}">{{ s.brand }}</a>{% else %}<strong>{{ s.brand }}</strong>{% endif %} · {{ s.title }}{% if s.needs_action %} <span class="badge-red">Action needed</span>{% endif %}<br><span class="text-xs text-slate-500">{{ s.deliverable }}{% if s.deadline %} · due {{ s.deadline|date:"d M" }}{% endif %}</span></span>
+    <span class="flex items-center gap-2"><span class="font-semibold">{{ s.fee|inr }}</span><span class="{% if s.status == 'accepted' or s.status == 'in_review' %}badge-amber{% elif s.status == 'on_hold' %}badge-red{% else %}badge-green{% endif %}">{{ s.status_label }}</span></span>
   </div>
   {% endfor %}
 </div>

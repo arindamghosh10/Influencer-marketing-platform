@@ -23,7 +23,8 @@
   {% elif campaign.status == "brief_confirmed" %}<p class="mt-1">Review the recommended creators. Add or remove anyone, then confirm your selection. Backups are listed below in case someone declines.</p>
   {% elif campaign.status == "shortlisted" %}<p class="mt-1">Your selection is saved. Send offers when you're ready. Each creator has 48 hours to accept; if someone declines or doesn't reply, we automatically offer the slot to your next backup.</p>
   {% elif campaign.status == "offers_out" %}<p class="mt-1">Creators are reviewing your offer. As soon as someone accepts, pay for them to start production: you only ever pay for creators who accepted.</p>
-  {% elif campaign.status == "active" %}<p class="mt-1">Payment received and creators are working on your content. You'll review each draft before anything is posted.{% if payable %} New acceptances are waiting for payment below.{% endif %}</p>
+  {% elif campaign.status == "active" %}<p class="mt-1">Payment received and creators are working on your content. You'll review each draft before anything is posted; each post is then checked daily for 7 days before the creator is paid.{% if payable %} New acceptances are waiting for payment below.{% endif %}</p>
+  {% elif campaign.status == "completed" %}<p class="mt-1">All posts passed verification. Your results are below. Content can be reused in your ads for {{ campaign.usage_rights_days }} days from publishing.</p>
   {% else %}<p class="mt-1">We're reading your product page.</p>{% endif %}
 </div>
 
@@ -37,6 +38,17 @@
 </div>
 {% endif %}
 
+{% if results %}
+<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+  <div class="stat"><p class="stat-label">Posts live</p><p class="stat-value">{{ results.posts }}</p></div>
+  <div class="stat"><p class="stat-label" title="Unique accounts that saw the posts (sum across posts)">Reach ⓘ</p><p class="stat-value">{{ results.reach|compact }}</p></div>
+  <div class="stat"><p class="stat-label">Views</p><p class="stat-value">{{ results.views|compact }}</p></div>
+  <div class="stat"><p class="stat-label" title="Likes + comments + shares + saves">Engagements ⓘ</p><p class="stat-value">{{ results.engagements|compact }}</p></div>
+  <div class="stat"><p class="stat-label" title="Engagements ÷ reach">Engagement rate ⓘ</p><p class="stat-value">{{ results.er }}%</p></div>
+  <div class="stat"><p class="stat-label" title="Spend (excl. GST) per 1,000 views">CPM ⓘ</p><p class="stat-value">{% if results.cpm %}{{ results.cpm|inr }}{% else %}—{% endif %}</p></div>
+</div>
+{% endif %}
+
 {% if slots %}
 <div class="mb-6 grid gap-6 lg:grid-cols-3">
   <section class="card p-0 lg:col-span-2">
@@ -44,18 +56,20 @@
     {% for s in slots %}
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm">
       <div>
-        <p class="font-medium">{% if s.creator_name %}{{ s.creator_name }} <span class="text-slate-500">@{{ s.creator_handle }}</span>{% else %}Slot {{ s.position }}{% endif %}</p>
+        <p class="font-medium">{% if s.creator_name %}{% if s.detail_url %}<a class="link" href="{{ s.detail_url }}">{{ s.creator_name }}</a>{% else %}{{ s.creator_name }}{% endif %} <span class="text-slate-500">@{{ s.creator_handle }}</span>{% else %}Slot {{ s.position }}{% endif %}</p>
         <p class="text-xs text-slate-500">
           {% if s.status == "offering" %}Offer sent · replies within {{ s.offer_expires_at|timeuntil }}
           {% elif s.status == "accepted" %}Accepted · pay within {{ s.payment_due_at|timeuntil }} to keep this creator
           {% elif s.status == "unfilled" %}No creator available · you won't be charged
+          {% elif s.permalink %}<a class="link" href="{{ s.permalink }}" target="_blank" rel="noopener">View post ↗</a>
           {% else %}{{ s.status_label }}{% endif %}
           {% if s.replaced %}<br>Tried before: {{ s.replaced|join:", " }}{% endif %}
         </p>
       </div>
       <div class="flex items-center gap-3">
         {% if s.price %}<span class="font-semibold">{{ s.price|inr }}</span>{% endif %}
-        <span class="{% if s.status == 'confirmed' %}badge-green{% elif s.status == 'accepted' %}badge-indigo{% elif s.status == 'offering' %}badge-amber{% else %}badge-gray{% endif %}">{{ s.status_label }}</span>
+        <span class="{% if s.status == 'verified' or s.status == 'live' %}badge-green{% elif s.status == 'on_hold' %}badge-red{% elif s.status == 'offering' or s.status == 'in_review' %}badge-amber{% elif s.status == 'unfilled' or s.status == 'cancelled' %}badge-gray{% else %}badge-indigo{% endif %}">{{ s.status_label }}</span>
+        {% if s.needs_review %}<a href="{{ s.detail_url }}" class="btn-primary px-3 py-1 text-xs">Review draft</a>{% endif %}
         {% if s.cancellable %}<form method="post" action="{% url 'campaigns:cancel_slot' campaign.pk s.id %}" onsubmit="return confirm('Remove this creator from the campaign?')">{% csrf_token %}<button class="link text-xs">Remove</button></form>{% endif %}
       </div>
     </div>

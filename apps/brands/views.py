@@ -36,6 +36,8 @@ def dashboard(request):
             actions.append((c, "Send offers to your selected creators"))
         elif c.slots.filter(status="accepted").exists():
             actions.append((c, "Creators accepted: pay to start production"))
+        if c.slots.filter(status="in_review").exists():
+            actions.append((c, "Drafts waiting for your review"))
     return render(
         request,
         "brands/dashboard.html",

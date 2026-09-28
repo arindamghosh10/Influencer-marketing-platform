@@ -31,22 +31,26 @@ STAGE_OF_STATUS = {
     Campaign.Status.SHORTLISTED: "offers",
     Campaign.Status.OFFERS_OUT: "offers",
     Campaign.Status.ACTIVE: "content",
+    Campaign.Status.COMPLETED: "verified",
 }
 # Once creators are chosen, the brief and settings are frozen: creators accept based on them.
 LOCKED = {
     Campaign.Status.SHORTLISTED,
     Campaign.Status.OFFERS_OUT,
     Campaign.Status.ACTIVE,
+    Campaign.Status.COMPLETED,
     Campaign.Status.CANCELLED,
 }
 
 
 def brand_slots(campaign):
     """Brand-facing slot rows. Only brand prices are exposed."""
+    from django.urls import reverse
+
     from apps.offers.models import Offer, Slot
 
     rows = []
-    for slot in campaign.slots.prefetch_related("offers__creator"):
+    for slot in campaign.slots.prefetch_related("offers__creator").select_related("post"):
         offer = slot.current_offer
         creator = slot.creator or (offer.creator if offer else None)
         price = slot.brand_price or (offer.brand_price if offer else 0)
@@ -66,9 +70,37 @@ def brand_slots(campaign):
                 "payment_due_at": slot.payment_due_at if slot.status == Slot.Status.ACCEPTED else None,
                 "replaced": [f"{o.creator.display_name} ({o.get_status_display().lower()})" for o in tried],
                 "cancellable": slot.status in (Slot.Status.OFFERING, Slot.Status.ACCEPTED),
+                "needs_review": slot.status == Slot.Status.IN_REVIEW,
+                "detail_url": reverse("content:review", args=[campaign.pk, slot.pk])
+                if slot.status in (*Slot.IN_PROGRESS, Slot.Status.VERIFIED)
+                else "",
+                "permalink": slot.post.permalink if hasattr(slot, "post") else "",
             }
         )
     return rows
+
+
+def campaign_results(campaign):
+    """Totals from the latest metrics snapshot of each published post (brand-facing)."""
+    from apps.content.models import Post
+
+    posts = Post.objects.filter(slot__campaign=campaign, published_at__isnull=False).prefetch_related(
+        "snapshots"
+    )
+    totals = {"posts": 0, "reach": 0, "views": 0, "engagements": 0, "spend": 0}
+    for post in posts:
+        totals["posts"] += 1
+        latest = post.snapshots.first()
+        if latest:
+            totals["reach"] += latest.reach
+            totals["views"] += latest.views
+            totals["engagements"] += latest.engagements
+    if not totals["posts"]:
+        return None
+    totals["spend"] = sum(o.subtotal for o in campaign.orders.filter(status="paid"))
+    totals["er"] = round(totals["engagements"] / totals["reach"] * 100, 1) if totals["reach"] else 0
+    totals["cpm"] = round(totals["spend"] / totals["views"] * 1000) if totals["views"] else None
+    return totals
 
 
 def _payable_summary(campaign):
@@ -164,12 +196,13 @@ def detail(request, pk):
         from apps.offers.services import send_blockers
 
         context["send_blockers"] = send_blockers(campaign)
-    if campaign.status in (Campaign.Status.OFFERS_OUT, Campaign.Status.ACTIVE):
+    if campaign.status in (Campaign.Status.OFFERS_OUT, Campaign.Status.ACTIVE, Campaign.Status.COMPLETED):
         from apps.payments.models import Order
 
         context["slots"] = brand_slots(campaign)
         context["payable"] = _payable_summary(campaign)
         context["orders"] = campaign.orders.filter(status=Order.Status.PAID)
+        context["results"] = campaign_results(campaign)
     return render(request, "campaigns/detail.html", context)
 
 

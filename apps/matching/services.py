@@ -45,7 +45,7 @@ def candidates_for(campaign):
 
     load = Counter(
         dict(
-            Slot.objects.filter(status__in=[Slot.Status.ACCEPTED, Slot.Status.CONFIRMED])
+            Slot.objects.filter(status__in=[Slot.Status.ACCEPTED, *Slot.IN_PROGRESS])
             .values_list("creator_id")
             .annotate(n=Count("id"))
         )

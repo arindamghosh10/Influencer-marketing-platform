@@ -30,6 +30,25 @@ class InstagramToken:
     expires_at: datetime | None
 
 
+@dataclass
+class PublishedMedia:
+    media_id: str
+    permalink: str
+
+
+@dataclass
+class MediaStatus:
+    exists: bool
+    caption: str | None = None  # None = provider can't tell
+    permalink: str = ""
+    reach: int = 0
+    views: int = 0
+    likes: int = 0
+    comments: int = 0
+    shares: int = 0
+    saves: int = 0
+
+
 class InstagramProvider:
     """Interface. `uses_oauth` False means the connect screen asks for a handle (mock/dev)."""
 
@@ -45,4 +64,14 @@ class InstagramProvider:
         raise NotImplementedError
 
     def fetch_profile(self, token: InstagramToken) -> InstagramProfile:
+        raise NotImplementedError
+
+    def publish(self, token: InstagramToken, media_url: str, caption: str, kind: str) -> PublishedMedia:
+        """kind: "reel" | "post" | "story". media_url must be publicly reachable by Meta."""
+        raise NotImplementedError
+
+    def find_media_by_permalink(self, token: InstagramToken, permalink: str) -> PublishedMedia | None:
+        raise NotImplementedError
+
+    def media_status(self, token: InstagramToken, media_id: str) -> MediaStatus:
         raise NotImplementedError

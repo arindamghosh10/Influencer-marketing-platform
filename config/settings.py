@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.integrations",
     "apps.offers",
     "apps.payments",
+    "apps.content",
 ]
 
 MIDDLEWARE = [
@@ -187,3 +188,8 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300.0,
     },
 }
+
+# Content
+SITE_URL = env("SITE_URL", default="http://localhost:8000")  # used for public media links for Instagram
+MAX_REVISIONS = env.int("MAX_REVISIONS", default=2)
+MAX_UPLOAD_MB = env.int("MAX_UPLOAD_MB", default=250)

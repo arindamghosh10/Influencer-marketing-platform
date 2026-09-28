@@ -1,0 +1,35 @@
+{% load platform %}
+{% if post %}
+<div class="card">
+  <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <h2 class="font-semibold">Instagram post</h2>
+    <span class="{% if post.status == 'verified' %}badge-green{% elif post.status == 'live' %}badge-indigo{% elif post.status == 'missing' or post.status == 'failed' %}badge-red{% else %}badge-amber{% endif %}">{{ post.get_status_display }}</span>
+  </div>
+  {% if post.status == "scheduled" %}
+    <p class="text-sm text-slate-600">Publishes automatically on {{ post.scheduled_for|date:"d M Y, H:i" }}.{% if post.last_error %} Last attempt failed: {{ post.last_error }}. We'll retry.{% endif %}</p>
+  {% elif post.status == "awaiting_self_post" %}
+    <p class="text-sm text-slate-600">Waiting for the creator to post{% if post.scheduled_for %} (planned for {{ post.scheduled_for|date:"d M, H:i" }}){% endif %} and share the link.</p>
+  {% else %}
+    <p class="text-sm"><a class="link" href="{{ post.permalink }}" target="_blank" rel="noopener">{{ post.permalink }}</a></p>
+    <p class="mt-1 text-xs text-slate-500">Published {{ post.published_at|date:"d M Y, H:i" }} · {{ post.get_method_display }}</p>
+    {% if post.status == "live" %}
+      <p class="mt-2 text-sm">Verification: checked daily for {{ verification_days }} days{% if post.last_checked_at %}, last check {{ post.last_checked_at|timesince }} ago{% endif %}. Next check {{ post.next_check_at|date:"d M, H:i" }}.</p>
+    {% elif post.status == "verified" %}
+      <p class="mt-2 text-sm text-emerald-700">Verified {{ post.verified_at|date:"d M Y" }}. Still monitored weekly until {{ post.monitoring_ends_at|date:"d M Y" }}.</p>
+    {% elif post.status == "missing" %}
+      <p class="mt-2 text-sm text-rose-700">Problem detected {{ post.missing_since|timesince }} ago: the post is missing or its disclosure was removed.</p>
+    {% endif %}
+    {% if metrics %}
+    <div class="mt-3 grid grid-cols-3 gap-2 text-center sm:grid-cols-6">
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500" title="Unique accounts that saw it">Reach</p><p class="font-semibold">{{ metrics.reach|compact }}</p></div>
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500">Views</p><p class="font-semibold">{{ metrics.views|compact }}</p></div>
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500">Likes</p><p class="font-semibold">{{ metrics.likes|compact }}</p></div>
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500">Comments</p><p class="font-semibold">{{ metrics.comments|compact }}</p></div>
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500">Shares</p><p class="font-semibold">{{ metrics.shares|compact }}</p></div>
+      <div class="rounded-lg bg-slate-50 p-2"><p class="text-[11px] text-slate-500">Saves</p><p class="font-semibold">{{ metrics.saves|compact }}</p></div>
+    </div>
+    <p class="mt-1 text-[11px] text-slate-400">Updated {{ metrics.captured_at|timesince }} ago · source: Instagram insights</p>
+    {% endif %}
+  {% endif %}
+</div>
+{% endif %}

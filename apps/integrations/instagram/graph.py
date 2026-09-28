@@ -6,6 +6,7 @@ the "Instagram API with Instagram Login" product; verify against the current doc
 is set up, since Meta changes metric names between API versions.
 """
 
+import time
 from datetime import timedelta
 from urllib.parse import urlencode
 
@@ -13,7 +14,14 @@ import httpx
 from django.conf import settings
 from django.utils import timezone
 
-from .base import InstagramError, InstagramProfile, InstagramProvider, InstagramToken
+from .base import (
+    InstagramError,
+    InstagramProfile,
+    InstagramProvider,
+    InstagramToken,
+    MediaStatus,
+    PublishedMedia,
+)
 
 AUTH_URL = "https://www.instagram.com/oauth/authorize"
 TOKEN_URL = "https://api.instagram.com/oauth/access_token"
@@ -151,6 +159,93 @@ class GraphInstagram(InstagramProvider):
             else:
                 out["age"] = {k: round(v / total * 100, 1) for k, v in counts.items()}
         return out
+
+    # --- Publishing ---------------------------------------------------------------------
+    # Two steps: create a media container from a public URL, wait until Meta has processed it,
+    # then publish it. Meta enforces a rolling 24-hour publishing limit per account.
+
+    def publish(self, token, media_url, caption, kind):
+        params = {"caption": caption, "access_token": token.access_token}
+        if kind == "reel":
+            params.update(media_type="REELS", video_url=media_url)
+        elif kind == "story":
+            params.update(media_type="STORIES", video_url=media_url)
+        else:
+            params["image_url"] = media_url
+        with httpx.Client(base_url=GRAPH, timeout=30) as client:
+            resp = client.post(f"/{token.user_id}/media", data=params)
+            self._check(resp)
+            container = resp.json()["id"]
+            for _ in range(40):  # up to ~4 minutes for video processing
+                state = client.get(
+                    f"/{container}", params={"fields": "status_code", "access_token": token.access_token}
+                )
+                self._check(state)
+                code = state.json().get("status_code")
+                if code == "FINISHED":
+                    break
+                if code in ("ERROR", "EXPIRED"):
+                    raise InstagramError(f"Instagram couldn't process the media ({code})")
+                time.sleep(6)
+            else:
+                raise InstagramError("Instagram took too long to process the media")
+            resp = client.post(
+                f"/{token.user_id}/media_publish",
+                data={"creation_id": container, "access_token": token.access_token},
+            )
+            self._check(resp)
+            media_id = resp.json()["id"]
+            info = client.get(
+                f"/{media_id}", params={"fields": "permalink", "access_token": token.access_token}
+            )
+            self._check(info)
+        return PublishedMedia(media_id=media_id, permalink=info.json().get("permalink", ""))
+
+    def find_media_by_permalink(self, token, permalink):
+        wanted = permalink.split("?")[0].rstrip("/")
+        with httpx.Client(base_url=GRAPH, timeout=20) as client:
+            resp = client.get(
+                "/me/media",
+                params={"fields": "id,permalink", "limit": 50, "access_token": token.access_token},
+            )
+            self._check(resp)
+        for item in resp.json().get("data", []):
+            if (item.get("permalink") or "").split("?")[0].rstrip("/") == wanted:
+                return PublishedMedia(media_id=item["id"], permalink=item["permalink"])
+        return None
+
+    def media_status(self, token, media_id):
+        with httpx.Client(base_url=GRAPH, timeout=20) as client:
+            info = client.get(
+                f"/{media_id}", params={"fields": "caption,permalink", "access_token": token.access_token}
+            )
+            if info.status_code in (400, 404):
+                return MediaStatus(exists=False)  # deleted, archived or not visible any more
+            self._check(info)
+            data = info.json()
+            metrics = {}
+            insights = client.get(
+                f"/{media_id}/insights",
+                params={
+                    "metric": "reach,views,likes,comments,shares,saved",
+                    "access_token": token.access_token,
+                },
+            )
+            if insights.status_code == 200:
+                for row in insights.json().get("data", []):
+                    values = row.get("values") or [{}]
+                    metrics[row.get("name")] = int(values[0].get("value") or 0)
+        return MediaStatus(
+            exists=True,
+            caption=data.get("caption", ""),
+            permalink=data.get("permalink", ""),
+            reach=metrics.get("reach", 0),
+            views=metrics.get("views", 0),
+            likes=metrics.get("likes", 0),
+            comments=metrics.get("comments", 0),
+            shares=metrics.get("shares", 0),
+            saves=metrics.get("saved", 0),
+        )
 
     @staticmethod
     def _check(resp):

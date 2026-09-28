@@ -1,0 +1,7 @@
+{% if checks %}
+<ul class="space-y-1 text-xs">
+  {% for c in checks %}
+  <li class="{% if c.level == 'block' %}text-rose-700{% elif c.level == 'warn' %}text-amber-700{% else %}text-emerald-700{% endif %}">{% if c.level == 'pass' %}✓{% elif c.level == 'warn' %}⚠{% else %}✗{% endif %} {{ c.message }}</li>
+  {% endfor %}
+</ul>
+{% endif %}

@@ -1,0 +1,20 @@
+{# One draft version with its preview, caption, checks and reviews. #}
+<div class="rounded-lg border border-slate-200 p-4">
+  <div class="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+    <span class="font-semibold">Version {{ asset.version }}</span>
+    <span class="{% if asset.status == 'final' or asset.status == 'approved' %}badge-green{% elif asset.status == 'changes_requested' %}badge-amber{% elif asset.status == 'superseded' %}badge-gray{% else %}badge-indigo{% endif %}">{{ asset.get_status_display }}</span>
+  </div>
+  {% if show_media %}
+    {% if asset.is_video %}<video src="{% url 'content:asset_file' asset.id %}" controls preload="metadata" class="mb-3 max-h-96 w-full rounded-lg bg-black"></video>
+    {% else %}<img src="{% url 'content:asset_file' asset.id %}" alt="Draft version {{ asset.version }}" class="mb-3 max-h-96 rounded-lg">{% endif %}
+  {% endif %}
+  <p class="whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm">{{ asset.caption }}</p>
+  <div class="mt-2">{% include "content/_checks.html" with checks=asset.checks %}</div>
+  {% for r in asset.reviews.all %}
+  <div class="mt-2 rounded-lg border-l-4 {% if r.decision == 'changes' %}border-amber-400 bg-amber-50{% else %}border-emerald-400 bg-emerald-50{% endif %} px-3 py-2 text-sm">
+    <p class="font-medium">{{ r.get_decision_display }} · {{ r.created_at|date:"d M, H:i" }}</p>
+    {% if r.comment %}<p class="mt-1 whitespace-pre-line">{{ r.comment }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  <p class="mt-2 text-[11px] text-slate-400">{{ asset.original_name }} · {{ asset.size|filesizeformat }} · SHA-256 {{ asset.sha256|truncatechars:20 }}</p>
+</div>
