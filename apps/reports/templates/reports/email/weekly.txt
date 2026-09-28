@@ -1,0 +1,12 @@
+{% load platform %}Hi {{ brand.company_name }},
+
+Here's your week on {{ platform_name }} ({{ week }}):
+
+- New views this week: {{ summary.views_gained }}
+- Posts that went live: {{ summary.new_posts|length }}
+- Drafts waiting for your review: {{ summary.in_review }}
+- Active campaigns: {{ summary.active_campaigns }}
+
+All time: {{ overview.posts }} posts, {{ overview.views }} views, {{ overview.reach }} reach{% if overview.cpm %}, {{ overview.cpm|inr }} per 1,000 views{% endif %}.
+
+See everything: {{ dashboard_url }}

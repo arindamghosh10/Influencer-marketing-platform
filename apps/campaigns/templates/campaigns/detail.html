@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load platform %}
+{% load static platform %}
 {% block content %}
 <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
   <div>
@@ -44,8 +44,19 @@
   <div class="stat"><p class="stat-label" title="Unique accounts that saw the posts (sum across posts)">Reach ⓘ</p><p class="stat-value">{{ results.reach|compact }}</p></div>
   <div class="stat"><p class="stat-label">Views</p><p class="stat-value">{{ results.views|compact }}</p></div>
   <div class="stat"><p class="stat-label" title="Likes + comments + shares + saves">Engagements ⓘ</p><p class="stat-value">{{ results.engagements|compact }}</p></div>
-  <div class="stat"><p class="stat-label" title="Engagements ÷ reach">Engagement rate ⓘ</p><p class="stat-value">{{ results.er }}%</p></div>
+  <div class="stat"><p class="stat-label" title="Engagements ÷ reach">Engagement rate ⓘ</p><p class="stat-value">{% if results.er is not None %}{{ results.er }}%{% else %}—{% endif %}</p></div>
   <div class="stat"><p class="stat-label" title="Spend (excl. GST) per 1,000 views">CPM ⓘ</p><p class="stat-value">{% if results.cpm %}{{ results.cpm|inr }}{% else %}—{% endif %}</p></div>
+</div>
+{% endif %}
+
+{% if chart %}
+<div class="mb-6">{% include "partials/chart.html" with id="post-views" data=chart table=chart_table kind="line" title="Views per creator" subtitle="Last 30 days, cumulative, from Instagram insights" %}</div>
+<div class="card mb-6 overflow-x-auto">
+  <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <h2 class="font-semibold">Results by creator</h2>
+    <a class="btn-secondary" href="{% url 'reports:campaign_report' campaign.pk %}">Campaign report (PDF)</a>
+  </div>
+  {% include "reports/_creator_table.html" with rows=creator_rows %}
 </div>
 {% endif %}
 
@@ -187,3 +198,4 @@
   </aside>
 </div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/chart-4.5.1.umd.min.js' %}"></script><script src="{% static 'js/charts.js' %}"></script>{% endblock %}

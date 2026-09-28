@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static platform %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-2xl font-semibold">Earnings</h1>
+  <div class="flex flex-wrap gap-2 text-sm">
+    {% for fy in years %}<a class="btn-secondary" href="{% url 'reports:statement' fy %}">FY {{ fy }} statement</a>{% endfor %}
+  </div>
+</div>
+<div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  <div class="stat"><p class="stat-label" title="Verified and on its way to your bank">Ready to pay out ⓘ</p><p class="stat-value">{{ summary.releasable|inr }}</p></div>
+  <div class="stat"><p class="stat-label" title="Released after your post has been live for 7 days">Pending verification ⓘ</p><p class="stat-value">{{ summary.held|inr }}</p></div>
+  <div class="stat"><p class="stat-label">Paid this month</p><p class="stat-value">{{ summary.paid_month|inr }}</p></div>
+</div>
+<div class="mb-6">{% include "partials/chart.html" with id="earnings-chart" data=chart table=table kind="bar" title="Paid to you, by month" subtitle="Net amount after TDS, by the month the bank transfer was made" %}</div>
+
+<div class="card mb-6 overflow-x-auto p-0">
+  <h2 class="px-5 py-4 font-semibold">Payments</h2>
+  <table class="w-full text-sm">
+    <thead class="border-y border-slate-200 text-left text-xs text-slate-500"><tr><th class="px-4 py-2">Campaign</th><th class="px-4 py-2 text-right">Fee</th><th class="px-4 py-2 text-right">GST</th><th class="px-4 py-2 text-right">TDS</th><th class="px-4 py-2 text-right">You receive</th><th class="px-4 py-2">Status</th></tr></thead>
+    <tbody>
+      {% for p in payouts %}
+      <tr class="border-b border-slate-100">
+        <td class="px-4 py-2">{{ p.slot.campaign.brand.company_name }}<br><span class="text-xs text-slate-500">{{ p.slot.campaign.title }}</span></td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ p.gross|inr }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{% if p.gst %}{{ p.gst|inr }}{% else %}—{% endif %}</td>
+        <td class="px-4 py-2 text-right tabular-nums">−{{ p.tds|inr }}</td>
+        <td class="px-4 py-2 text-right font-medium tabular-nums">{{ p.net|inr }}</td>
+        <td class="px-4 py-2">
+          <span class="{% if p.status == 'paid' %}badge-green{% elif p.status == 'releasable' %}badge-indigo{% elif p.status == 'held' %}badge-amber{% else %}badge-gray{% endif %}">{{ p.get_status_display }}</span>
+          {% if p.utr %}<p class="mt-1 text-xs text-slate-500">UTR {{ p.utr }} · {{ p.paid_at|date:"d M Y" }}</p>{% endif %}
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No payments yet. Accept an offer to get started.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if posts %}
+<div class="card overflow-x-auto p-0">
+  <h2 class="px-5 py-4 font-semibold">How your sponsored posts did</h2>
+  <table class="w-full text-sm">
+    <thead class="border-y border-slate-200 text-left text-xs text-slate-500"><tr><th class="px-4 py-2">Brand</th><th class="px-4 py-2 text-right">Reach</th><th class="px-4 py-2 text-right">Views</th><th class="px-4 py-2 text-right">Engagements</th><th class="px-4 py-2 text-right" title="Compared with your average reach">vs your usual ⓘ</th></tr></thead>
+    <tbody>
+      {% for r in posts %}
+      <tr class="border-b border-slate-100">
+        <td class="px-4 py-2"><a class="link" href="{{ r.post.permalink }}" target="_blank" rel="noopener">{{ r.brand }}</a><br><span class="text-xs text-slate-500">{{ r.post.published_at|date:"d M Y" }}</span></td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ r.reach|compact }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ r.views|compact }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ r.engagements|compact }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{% if r.vs_usual is not None %}{% if r.vs_usual >= 0 %}▲{% else %}▼{% endif %}{{ r.vs_usual }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/chart-4.5.1.umd.min.js' %}"></script><script src="{% static 'js/charts.js' %}"></script>{% endblock %}

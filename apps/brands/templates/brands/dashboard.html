@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load platform %}
+{% load static platform %}
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
   <div>
@@ -29,12 +29,26 @@
 </div>
 {% endif %}
 
-<div class="mb-6 grid gap-4 sm:grid-cols-4">
-  <div class="stat"><p class="stat-label">Campaigns</p><p class="stat-value">{{ campaigns|length }}</p></div>
-  <div class="stat"><p class="stat-label">Total spend</p><p class="stat-value">₹0</p></div>
-  <div class="stat"><p class="stat-label">Posts live</p><p class="stat-value">0</p></div>
-  <div class="stat"><p class="stat-label">Total reach</p><p class="stat-value">—</p></div>
+<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+  <div class="stat"><p class="stat-label">Spend</p><p class="stat-value">{{ overview.spend|inr }}</p><p class="text-xs text-slate-500">excl. GST</p></div>
+  <div class="stat"><p class="stat-label">Posts live</p><p class="stat-value">{{ overview.posts }}</p></div>
+  <div class="stat"><p class="stat-label" title="Unique accounts that saw each post, summed across posts">Reach ⓘ</p><p class="stat-value">{{ overview.reach|compact }}</p></div>
+  <div class="stat"><p class="stat-label">Views</p><p class="stat-value">{{ overview.views|compact }}</p></div>
+  <div class="stat"><p class="stat-label" title="Likes + comments + shares + saves, divided by reach">Engagement rate ⓘ</p><p class="stat-value">{% if overview.er is not None %}{{ overview.er }}%{% else %}—{% endif %}</p></div>
+  <div class="stat"><p class="stat-label" title="Spend (excl. GST) per 1,000 views">CPM ⓘ</p><p class="stat-value">{% if overview.cpm %}{{ overview.cpm|inr }}{% else %}—{% endif %}</p></div>
 </div>
+
+{% if chart or upcoming %}
+<div class="mb-6 grid gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">{% if chart %}{% include "partials/chart.html" with id="views-chart" data=chart table=table kind="line" title="Views across all campaigns" subtitle="Last 30 days, cumulative, from Instagram insights" %}{% endif %}</div>
+  <div class="card">
+    <h2 class="mb-2 font-semibold">Upcoming posts</h2>
+    {% for p in upcoming %}
+    <div class="border-t border-slate-100 py-2 text-sm"><p><strong>@{{ p.slot.creator.ig_username }}</strong> · {{ p.slot.campaign.title }}</p><p class="text-xs text-slate-500">{{ p.scheduled_for|date:"D d M, H:i" }}{% if p.method == "self" %} · creator posts it{% endif %}</p></div>
+    {% empty %}<p class="text-sm text-slate-500">Nothing scheduled in the next 14 days.</p>{% endfor %}
+  </div>
+</div>
+{% endif %}
 
 <div class="card p-0">
   <div class="border-b border-slate-100 px-5 py-3 font-semibold">Campaigns</div>
@@ -48,3 +62,4 @@
   {% endfor %}
 </div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/chart-4.5.1.umd.min.js' %}"></script><script src="{% static 'js/charts.js' %}"></script>{% endblock %}

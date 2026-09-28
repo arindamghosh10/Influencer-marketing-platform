@@ -1,0 +1,27 @@
+{% load platform %}<!doctype html>
+<html><body style="margin:0;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#0f172a">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px">
+  <tr><td style="padding:24px">
+    <p style="margin:0;font-size:12px;color:#64748b">{{ platform_name }} · weekly summary · {{ week }}</p>
+    <h1 style="margin:8px 0 16px;font-size:20px">Hi {{ brand.company_name }}, here's your week</h1>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:12px;border:1px solid #e2e8f0;border-radius:8px"><p style="margin:0;font-size:11px;color:#64748b">NEW VIEWS</p><p style="margin:4px 0 0;font-size:22px;font-weight:bold">{{ summary.views_gained|compact }}</p></td>
+        <td width="8"></td>
+        <td style="padding:12px;border:1px solid #e2e8f0;border-radius:8px"><p style="margin:0;font-size:11px;color:#64748b">POSTS WENT LIVE</p><p style="margin:4px 0 0;font-size:22px;font-weight:bold">{{ summary.new_posts|length }}</p></td>
+        <td width="8"></td>
+        <td style="padding:12px;border:1px solid #e2e8f0;border-radius:8px"><p style="margin:0;font-size:11px;color:#64748b">DRAFTS TO REVIEW</p><p style="margin:4px 0 0;font-size:22px;font-weight:bold">{{ summary.in_review }}</p></td>
+      </tr>
+    </table>
+    {% if summary.new_posts %}
+    <p style="margin:20px 0 6px;font-weight:bold">New posts</p>
+    {% for p in summary.new_posts %}<p style="margin:0 0 4px;font-size:14px">@{{ p.slot.creator.ig_username }} · {{ p.slot.campaign.title }} · <a href="{{ p.permalink }}" style="color:#4f46e5">view</a></p>{% endfor %}
+    {% endif %}
+    <p style="margin:20px 0 0;font-size:14px;color:#475569">All time: {{ overview.posts }} posts · {{ overview.views|compact }} views · {{ overview.reach|compact }} reach{% if overview.cpm %} · {{ overview.cpm|inr }} per 1,000 views{% endif %}</p>
+    <p style="margin:24px 0 0"><a href="{{ dashboard_url }}" style="background:#4f46e5;color:#ffffff;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:14px">Open your dashboard</a></p>
+  </td></tr>
+</table>
+<p style="font-size:11px;color:#94a3b8">You get this summary every Monday while you have campaigns running.</p>
+</td></tr></table>
+</body></html>

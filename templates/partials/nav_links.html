@@ -1,9 +1,12 @@
 {% if user.is_brand %}
   <a href="{% url 'brands:dashboard' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Dashboard</a>
   <a href="{% url 'campaigns:create' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">New campaign</a>
+  <a href="{% url 'reports:library' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Content library</a>
+  <a href="{% url 'reports:billing' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Billing</a>
   <a href="{% url 'brands:profile' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Brand profile</a>
 {% elif user.is_creator %}
   <a href="{% url 'creators:dashboard' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Dashboard</a>
+  <a href="{% url 'reports:earnings' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Earnings</a>
   <a href="{% url 'creators:onboarding' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">My profile</a>
   <a href="{% url 'contracts:consents' %}" class="rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">Consents</a>
 {% elif user.is_ops %}

@@ -1,0 +1,22 @@
+{% comment %}
+Usage: {% include "partials/chart.html" with id="views" data=chart table=table kind="line" title="Views" subtitle="..." %}
+Renders a Chart.js canvas plus a table view of the same numbers (always available, no hover needed).
+{% endcomment %}
+{% load platform %}
+<figure class="card">
+  <figcaption class="mb-3">
+    <p class="font-semibold">{{ title }}</p>
+    {% if subtitle %}<p class="text-xs text-slate-500">{{ subtitle }}</p>{% endif %}
+  </figcaption>
+  {{ data|json_script:id }}
+  <div class="relative h-64"><canvas data-chart data-source="{{ id }}" data-kind="{{ kind|default:'line' }}" role="img" aria-label="{{ title }}"></canvas></div>
+  <details class="mt-3 text-sm">
+    <summary class="cursor-pointer text-xs text-slate-500">Show data</summary>
+    <div class="mt-2 max-h-64 overflow-auto">
+      <table class="w-full text-xs">
+        <thead><tr>{% for h in table.headers %}<th class="border-b border-slate-200 px-2 py-1 text-left font-medium text-slate-500">{{ h }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for row in table.rows %}<tr>{% for cell in row %}<td class="border-b border-slate-100 px-2 py-1 {% if not forloop.first %}text-right tabular-nums{% endif %}">{% if cell is None %}—{% elif forloop.first %}{{ cell }}{% else %}{{ cell|floatformat:"0g" }}{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </details>
+</figure>

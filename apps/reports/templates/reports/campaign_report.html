@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load platform %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <div class="mb-4 flex items-center justify-between print:hidden">
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="link text-sm">← Campaign</a>
+    <button onclick="window.print()" class="btn-secondary">Print / save as PDF</button>
+  </div>
+  <div class="card space-y-6">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-slate-500">Campaign report · {{ PLATFORM_NAME }}</p>
+      <h1 class="text-2xl font-bold">{{ campaign.title }}</h1>
+      <p class="text-sm text-slate-500">{{ campaign.brand.company_name }} · {{ brief.product_name }} · {{ campaign.get_deliverable_display }} · generated {{ generated|date:"d M Y" }}</p>
+    </div>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div class="stat"><p class="stat-label">Spend (excl. GST)</p><p class="stat-value">{{ totals.spend|inr }}</p></div>
+      <div class="stat"><p class="stat-label">Posts</p><p class="stat-value">{{ totals.posts }}</p></div>
+      <div class="stat"><p class="stat-label">Reach</p><p class="stat-value">{{ totals.reach|compact }}</p></div>
+      <div class="stat"><p class="stat-label">Views</p><p class="stat-value">{{ totals.views|compact }}</p></div>
+      <div class="stat"><p class="stat-label">Engagement rate</p><p class="stat-value">{% if totals.er is not None %}{{ totals.er }}%{% else %}—{% endif %}</p></div>
+      <div class="stat"><p class="stat-label">CPM (per 1,000 views)</p><p class="stat-value">{% if totals.cpm %}{{ totals.cpm|inr }}{% else %}—{% endif %}</p></div>
+    </div>
+    {% if best_er or best_cpm %}
+    <div>
+      <h2 class="mb-2 font-semibold">What worked</h2>
+      <ul class="list-disc space-y-1 pl-5 text-sm">
+        {% if best_er %}<li><strong>@{{ best_er.handle }}</strong> drove the highest engagement ({{ best_er.er }}% of people reached engaged).</li>{% endif %}
+        {% if best_cpm %}<li><strong>@{{ best_cpm.handle }}</strong> was the most cost-efficient at {{ best_cpm.cpm|inr }} per 1,000 views.</li>{% endif %}
+        <li>Rebook creators who beat their expected reach; they're marked ▲ below.</li>
+      </ul>
+    </div>
+    {% endif %}
+    <div class="overflow-x-auto">
+      <h2 class="mb-2 font-semibold">By creator</h2>
+      {% include "reports/_creator_table.html" %}
+    </div>
+    <p class="text-xs text-slate-400">Figures come from Instagram insights at the last check. Reach is summed per post, so a person who saw two posts counts twice. Expected reach is the creator's average reach when the campaign was matched.</p>
+  </div>
+</div>
+{% endblock %}

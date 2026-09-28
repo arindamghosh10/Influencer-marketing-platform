@@ -80,30 +80,6 @@ def brand_slots(campaign):
     return rows
 
 
-def campaign_results(campaign):
-    """Totals from the latest metrics snapshot of each published post (brand-facing)."""
-    from apps.content.models import Post
-
-    posts = Post.objects.filter(
-        slot__campaign=campaign,
-        status__in=[Post.Status.LIVE, Post.Status.VERIFIED, Post.Status.MISSING],
-    ).prefetch_related("snapshots")
-    totals = {"posts": 0, "reach": 0, "views": 0, "engagements": 0, "spend": 0}
-    for post in posts:
-        totals["posts"] += 1
-        latest = post.snapshots.first()
-        if latest:
-            totals["reach"] += latest.reach
-            totals["views"] += latest.views
-            totals["engagements"] += latest.engagements
-    if not totals["posts"]:
-        return None
-    totals["spend"] = sum(o.subtotal for o in campaign.orders.filter(status="paid"))
-    totals["er"] = round(totals["engagements"] / totals["reach"] * 100, 1) if totals["reach"] else 0
-    totals["cpm"] = round(totals["spend"] / totals["views"] * 1000) if totals["views"] else None
-    return totals
-
-
 def _payable_summary(campaign):
     from apps.payments.services import payable_slots
     from apps.payments.tax import gst_split
@@ -203,7 +179,15 @@ def detail(request, pk):
         context["slots"] = brand_slots(campaign)
         context["payable"] = _payable_summary(campaign)
         context["orders"] = campaign.orders.filter(status=Order.Status.PAID)
-        context["results"] = campaign_results(campaign)
+        from apps.reports import analytics
+
+        posts = list(analytics.brand_posts(campaign.brand, campaign))
+        if posts:
+            chart = analytics.views_per_post(posts)
+            context["results"] = analytics.totals(posts, analytics.brand_spend(campaign.brand, campaign))
+            context["chart"] = chart
+            context["chart_table"] = analytics.as_table(chart)
+            context["creator_rows"] = analytics.creator_rows(campaign)
     return render(request, "campaigns/detail.html", context)
 
 

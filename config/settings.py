@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     "apps.offers",
     "apps.payments",
     "apps.content",
+    "apps.reports",
 ]
 
 MIDDLEWARE = [
@@ -186,6 +188,10 @@ CELERY_BEAT_SCHEDULE = {
     "process-deadlines": {
         "task": "apps.offers.tasks.process_deadlines",
         "schedule": 300.0,
+    },
+    "weekly-brand-reports": {
+        "task": "apps.reports.tasks.weekly_reports",
+        "schedule": crontab(hour=9, minute=0, day_of_week="mon"),  # CELERY_TIMEZONE is Asia/Kolkata
     },
 }
 

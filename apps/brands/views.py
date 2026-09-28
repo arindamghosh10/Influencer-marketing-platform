@@ -38,6 +38,10 @@ def dashboard(request):
             actions.append((c, "Creators accepted: pay to start production"))
         if c.slots.filter(status="in_review").exists():
             actions.append((c, "Drafts waiting for your review"))
+    from apps.reports import analytics
+
+    posts = list(analytics.brand_posts(brand))
+    chart = analytics.views_over_time(posts)
     return render(
         request,
         "brands/dashboard.html",
@@ -47,6 +51,10 @@ def dashboard(request):
             "campaigns": campaigns,
             "actions": actions,
             "setup_done": all(done for _k, _l, done in steps),
+            "overview": analytics.totals(posts, analytics.brand_spend(brand)),
+            "chart": chart if posts else None,
+            "table": analytics.as_table(chart),
+            "upcoming": analytics.upcoming_posts(brand),
         },
     )
 
