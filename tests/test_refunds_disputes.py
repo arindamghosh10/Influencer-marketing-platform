@@ -168,3 +168,21 @@ def test_dispute_pages_are_protected(client, paid_slot, brand_user, creator_user
         reverse("disputes:creator_report", args=[paid_slot.pk]), {"category": "other", "description": "x"}
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.django_db
+def test_ops_can_skip_ahead_to_verify_only_in_debug(client, settings, paid_slot, brand_user):
+    from apps.accounts.models import User
+
+    post = _publish(paid_slot, brand_user)
+    ops = User.objects.get(email="ops@demo.local")
+    client.force_login(ops)
+    settings.DEBUG = False
+    client.post(reverse("core:run_jobs"), {"days": 8})
+    assert Payout.objects.get(slot=paid_slot).status == Payout.Status.HELD
+    settings.DEBUG = True
+    assert "Test: run as if" in client.get(reverse("core:ops")).content.decode()
+    client.post(reverse("core:run_jobs"), {"days": 8})
+    post.refresh_from_db()
+    assert post.status == Post.Status.VERIFIED
+    assert Payout.objects.get(slot=paid_slot).status == Payout.Status.RELEASABLE

@@ -30,19 +30,33 @@ def notifications(request):
 
 @ops_required
 def run_jobs(request):
+    from datetime import timedelta
+
+    from django.conf import settings
     from django.contrib import messages
 
     from apps.offers.services import process_deadlines
 
     if request.method == "POST":
-        result = process_deadlines()
+        # Local testing only: run the jobs as if some days had passed (e.g. the 7-day
+        # verification), so the whole flow can be tried in one sitting.
+        days = 0
+        if settings.DEBUG:
+            try:
+                days = max(0, min(int(request.POST.get("days") or 0), 60))
+            except ValueError:
+                days = 0
+        result = process_deadlines(timezone.now() + timedelta(days=days))
         summary = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in result.items())
-        messages.success(request, f"Scheduled jobs ran. {summary}.")
+        when = f" as if {days} day{'s' if days != 1 else ''} had passed" if days else ""
+        messages.success(request, f"Scheduled jobs ran{when}. {summary}.")
     return redirect("core:ops")
 
 
 @ops_required
 def ops_dashboard(request):
+    from django.conf import settings
+
     from apps.brands.models import BrandProfile
     from apps.campaigns.models import Campaign
     from apps.creators.models import CreatorProfile
@@ -68,5 +82,6 @@ def ops_dashboard(request):
             "slot__campaign", "slot__creator"
         ),
         "payouts_due": Payout.objects.filter(status=Payout.Status.RELEASABLE).select_related("creator"),
+        "time_travel": settings.DEBUG,
     }
     return render(request, "core/ops.html", context)

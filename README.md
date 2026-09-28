@@ -5,6 +5,7 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 - Product plan: [docs/PRODUCT_PLAN.md](docs/PRODUCT_PLAN.md)
 - Dashboards and analytics spec: [docs/DASHBOARDS.md](docs/DASHBOARDS.md)
 - Tech stack (Python/Django, free-tier v1), APIs and task list: [docs/TECH_PLAN.md](docs/TECH_PLAN.md)
+- How to test every flow locally, step by step: [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)
 
 ## What works today
 
