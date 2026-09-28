@@ -208,7 +208,7 @@ Users control non-critical notifications. Critical ones (money, deadlines, compl
 
 - **Metrics pipeline**: a scheduled job pulls Instagram insights per post on a decaying schedule (§6) and stores them as `MetricSnapshot` rows (time series). Dashboards read from pre-aggregated tables/materialised views, never from Meta live.
 - **Analytics store**: Postgres is fine for MVP. Move heavy aggregates to ClickHouse/BigQuery when the snapshot count grows.
-- **Charts**: one charting library across all dashboards (e.g. Recharts / ECharts) with a shared theme and accessible colours.
+- **Charts**: one charting library across all dashboards (Chart.js) with a shared theme and accessible colours.
 - **Access control**: all dashboard queries go through a role-and-ownership filter (row-level security in Postgres) so the rules in §5 are enforced in the database, not just in the UI.
 - **Report generation**: HTML templates rendered to PDF; shareable read-only links with expiry.
 

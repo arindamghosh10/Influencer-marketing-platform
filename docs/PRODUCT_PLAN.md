@@ -154,7 +154,7 @@ All approved creators
 
 ## 6. Campaign lifecycle (state machine)
 
-Build this as a **durable workflow** (e.g. Temporal, or a DB-backed state machine with a job queue). There are long waits (48h responses, 7-day verification, 30-day live checks) that must survive restarts.
+Build this as a **durable workflow**: a database-backed state machine where every deadline is stored as a row, processed by a job queue (Celery). See TECH_PLAN.md. There are long waits (48h responses, 7-day verification, 30-day live checks) that must survive restarts.
 
 ```
 DRAFT
@@ -290,25 +290,9 @@ Brands, creators and ops each get a full dashboard: action items, status with th
 
 ---
 
-## 13. Technical architecture (suggested)
+## 13. Technical architecture
 
-```
-┌─────────────── Web (Next.js) / Mobile (React Native, later) ────────────────┐
-│ Brand app · Creator app · Ops console                                        │
-└───────────────▲──────────────────────────────────────────────────────────────┘
-                │ REST/GraphQL (auth: JWT + RBAC)
-┌───────────────┴─────────────── API (Node/NestJS or Python/FastAPI) ─────────┐
-│ Accounts · Campaigns · Matching · Content · Consent Ledger · Payments ·      │
-│ Notifications · Integrations (Meta, WhatsApp, Payments, KYC, e-sign)         │
-└───────┬───────────────┬───────────────┬───────────────┬──────────────────────┘
-        │               │               │               │
-  PostgreSQL +     Workflow engine   Object storage   AI services
-  pgvector         (Temporal /       (S3 + Object     • LLM (brief, claims, scripts,
-  (core data,      BullMQ+Redis)     Lock for          explanations): Claude
-   embeddings)     timers, retries   contracts)       • Vision (logo/product check)
-                                                       • Image/Video gen (Mode B/C)
-                                                       • C2PA signing
-```
+The stack (Python / Django, free-tier services for v1) is in **[TECH_PLAN.md](TECH_PLAN.md)**.
 
 **Core entities**: `User`, `Organization(Brand)`, `CreatorProfile`, `SocialAccount`, `NicheTaxonomy`, `Campaign`, `ProductBrief(version)`, `Slot` (one creator deliverable), `Offer`, `Agreement`, `ConsentEvent`, `Asset(version, hash)`, `Approval`, `Post`, `MetricSnapshot`, `Payment`, `Payout`, `Dispute`, `AuditLog`.
 
@@ -365,7 +349,8 @@ Brands, creators and ops each get a full dashboard: action items, status with th
 | 4 | Paid-ads reuse (whitelisting) | **Yes, from day 1, in both contracts** | Usage rights for paid ads are a standard clause. The creator must also grant the brand partner access in the Instagram app, so the platform tracks and reminds |
 | 5 | Pricing | **50/50 split of the campaign price, not disclosed** | Principal model, margin engine, strictly separated brand and creator views (see §7) |
 | 6 | Creator tier | **Nano and micro (1k-100k followers)** | Authenticity checks matter more. Onboarding must be fully self-serve and mobile-first |
-| 7 | Build | **Claude builds it** | Tech plan and task list: [TECH_PLAN.md](TECH_PLAN.md) |
+| 7 | Build | **Claude builds it, in Python** | Django stack; tech plan and task list: [TECH_PLAN.md](TECH_PLAN.md) |
+| 8 | Services for v1 | **Free tiers and open-source wherever possible; upgrade later** | Every service behind a swappable adapter; upgrade path in TECH_PLAN.md |
 
 ---
 
