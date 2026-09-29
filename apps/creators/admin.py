@@ -29,7 +29,7 @@ class CreatorProfileAdmin(admin.ModelAdmin):
         "kyc_status",
         "status",
     )
-    list_filter = ("status", "kyc_status", "primary_niche__parent")
+    list_filter = ("status", "kyc_status", "ig_needs_reconnect", "primary_niche__parent")
     search_fields = ("display_name", "ig_username", "user__email")
     filter_horizontal = ("niches",)
     actions = [approve, reject, verify_kyc]

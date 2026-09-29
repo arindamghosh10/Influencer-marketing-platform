@@ -346,8 +346,17 @@ def release_unpaid(now=None):
 def process_deadlines(now=None):
     """Everything time-based: offers, payments, reviews, publishing, verification."""
     from apps.content.services import run_due
+    from apps.core.models import JobHeartbeat
+    from apps.creators.sync import sync_due
+
+    from .reminders import send_reminders
 
     now = now or timezone.now()
     result = {"expired_offers": expire_offers(now), "released_slots": release_unpaid(now)}
     result.update(run_due(now))
+    result.update(sync_due(now))
+    result["reminders"] = send_reminders(now)
+    JobHeartbeat.objects.update_or_create(
+        name="process_deadlines", defaults={"last_run_at": timezone.now(), "last_result": result}
+    )
     return result

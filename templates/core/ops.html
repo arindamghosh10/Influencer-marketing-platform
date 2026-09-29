@@ -20,6 +20,50 @@
   <div class="stat"><p class="stat-label">Approved brands</p><p class="stat-value">{{ counts.brands_approved }}</p></div>
   <div class="stat"><p class="stat-label">Active campaigns</p><p class="stat-value">{{ counts.campaigns }}</p></div>
 </div>
+<div class="mb-6 grid gap-6 lg:grid-cols-3">
+  <section class="card lg:col-span-2">
+    <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="font-semibold">Campaign funnel</h2>
+      <p class="text-xs text-slate-500">Campaigns created in the last {{ funnel.days }} days</p>
+    </div>
+    <div class="space-y-2">
+      {% for s in funnel.steps %}
+      <div class="grid grid-cols-[9rem_1fr_4.5rem] items-center gap-3 text-sm">
+        <span class="text-slate-600">{{ s.label }}</span>
+        <div class="h-3 rounded-sm bg-slate-100"><div class="h-3 rounded-sm" style="width: {{ s.pct|default:0 }}%; background: #2a78d6"></div></div>
+        <span class="text-right tabular-nums"><strong>{{ s.count }}</strong>{% if s.pct is not None and not forloop.first %} <span class="text-xs text-slate-500">{{ s.pct }}%</span>{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4">
+      <div><dt class="text-slate-500">Offers sent</dt><dd class="font-semibold tabular-nums">{{ funnel.offers.sent }}</dd></div>
+      <div><dt class="text-slate-500" title="Accepted ÷ (accepted + declined + expired)">Acceptance ⓘ</dt><dd class="font-semibold tabular-nums">{% if funnel.offers.acceptance_pct is not None %}{{ funnel.offers.acceptance_pct }}%{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-slate-500" title="Brand prices of paid creators, excl. GST, net of cancellations">GMV ⓘ</dt><dd class="font-semibold tabular-nums">{{ funnel.gmv|inr }}</dd></div>
+      <div><dt class="text-slate-500" title="GMV minus creator fees. Internal only.">Margin ⓘ</dt><dd class="font-semibold tabular-nums">{{ funnel.margin|inr }}{% if funnel.margin_pct is not None %} <span class="text-xs font-normal text-slate-500">{{ funnel.margin_pct }}%</span>{% endif %}</dd></div>
+    </dl>
+  </section>
+  <section class="card">
+    <h2 class="mb-3 font-semibold">Integrations</h2>
+    {% for i in integrations %}
+    <div class="border-t border-slate-100 py-2 text-sm first:border-t-0">
+      <p class="flex items-center justify-between gap-2"><span class="font-medium">{{ i.name }} <span class="text-xs font-normal text-slate-500">({{ i.mode }})</span></span>{% if i.ok %}<span class="badge-green">OK</span>{% else %}<span class="badge-red">Check</span>{% endif %}</p>
+      <p class="text-xs text-slate-500">{{ i.detail }}</p>
+    </div>
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card mb-6">
+  <h2 class="mb-3 font-semibold">Needs attention</h2>
+  {% for g in stuck %}
+  <details class="border-t border-slate-100 py-2 first:border-t-0" {% if forloop.first %}open{% endif %}>
+    <summary class="cursor-pointer text-sm font-medium">{{ g.title }} <span class="badge-amber ml-1">{{ g.count }}</span></summary>
+    {% if g.hint %}<p class="mt-1 text-xs text-slate-500">{{ g.hint }}</p>{% endif %}
+    <ul class="mt-1 text-sm">{% for it in g.items %}<li class="flex justify-between gap-3 py-1"><span>{{ it.label }}</span><a class="link shrink-0" href="{{ it.url }}">Open</a></li>{% endfor %}</ul>
+  </details>
+  {% empty %}<p class="text-sm text-slate-500">Nothing stuck. 🎉</p>{% endfor %}
+</section>
+
 <div class="grid gap-6 lg:grid-cols-2">
   <div class="card">
     <h2 class="mb-3 font-semibold">Creators waiting for review ({{ creators_pending|length }})</h2>

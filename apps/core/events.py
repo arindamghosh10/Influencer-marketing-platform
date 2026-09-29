@@ -1,5 +1,6 @@
 """Helpers to record audit events and notify users."""
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 
@@ -26,7 +27,8 @@ def events_for(target):
 def notify(user, title, body="", url="", email=True):
     Notification.objects.create(user=user, title=title, body=body, url=url)
     if email and user.email:
-        send_mail(title, f"{body}\n\n{url}".strip(), None, [user.email], fail_silently=True)
+        link = f"{settings.SITE_URL.rstrip('/')}{url}" if url.startswith("/") else url
+        send_mail(title, f"{body}\n\n{link}".strip(), None, [user.email], fail_silently=True)
 
 
 def client_ip(request):

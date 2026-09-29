@@ -10,10 +10,19 @@ import re
 import secrets
 import time
 
-from .base import InstagramProfile, InstagramProvider, InstagramToken, MediaStatus, PublishedMedia
+from .base import (
+    InstagramError,
+    InstagramProfile,
+    InstagramProvider,
+    InstagramToken,
+    MediaStatus,
+    PublishedMedia,
+)
 
 # Media ids of posts to treat as deleted (tests and ops "simulate removal" use this).
 REMOVED: set[str] = set()
+# Access tokens to treat as revoked (tests use this to simulate a creator removing access).
+REVOKED: set[str] = set()
 
 CITIES = [
     "Mumbai",
@@ -77,6 +86,8 @@ class MockInstagram(InstagramProvider):
         return InstagramToken(access_token=f"mock:{handle}", user_id=f"mock-{handle}", expires_at=None)
 
     def fetch_profile(self, token):
+        if token.access_token in REVOKED:
+            raise InstagramError("Error validating access token: the user has not authorized application")
         handle = token.access_token.removeprefix("mock:")
         rng = random.Random(int(hashlib.sha256(handle.encode()).hexdigest(), 16))
         followers = int(rng.choice([rng.randint(1_500, 9_900), rng.randint(10_000, 95_000)]))

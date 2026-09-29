@@ -66,6 +66,10 @@ class InstagramProvider:
     def fetch_profile(self, token: InstagramToken) -> InstagramProfile:
         raise NotImplementedError
 
+    def refresh_token(self, token: InstagramToken) -> InstagramToken:
+        """Extend a long-lived token (valid 60 days; must be refreshed before it expires)."""
+        return token
+
     def publish(self, token: InstagramToken, media_url: str, caption: str, kind: str) -> PublishedMedia:
         """kind: "reel" | "post" | "story". media_url must be publicly reachable by Meta."""
         raise NotImplementedError

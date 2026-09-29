@@ -49,3 +49,24 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class SentReminder(models.Model):
+    """One row per reminder sent, so each reminder goes out once however often jobs run."""
+
+    key = models.CharField(max_length=120, unique=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.key
+
+
+class JobHeartbeat(models.Model):
+    """Last run of a scheduled job, shown on the ops page so a stopped scheduler is noticed."""
+
+    name = models.CharField(max_length=60, unique=True)
+    last_run_at = models.DateTimeField()
+    last_result = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.name

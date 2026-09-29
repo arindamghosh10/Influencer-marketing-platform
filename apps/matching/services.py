@@ -109,7 +109,7 @@ def candidates_for(campaign, exclude_ids=()):
                 max_active=c.max_active_campaigns,
                 on_break=c.on_break,
                 approved=True,
-                ig_connected=c.ig_connected,
+                ig_connected=c.ig_connected and not c.ig_needs_reconnect,
             )
         )
     return out

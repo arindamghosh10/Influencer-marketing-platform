@@ -84,6 +84,20 @@ class GraphInstagram(InstagramProvider):
             expires_at=timezone.now() + timedelta(seconds=int(long_data.get("expires_in", 0))),
         )
 
+    def refresh_token(self, token):
+        with httpx.Client(timeout=15) as client:
+            resp = client.get(
+                f"{GRAPH}/refresh_access_token",
+                params={"grant_type": "ig_refresh_token", "access_token": token.access_token},
+            )
+            self._check(resp)
+            data = resp.json()
+        return InstagramToken(
+            access_token=data["access_token"],
+            user_id=token.user_id,
+            expires_at=timezone.now() + timedelta(seconds=int(data.get("expires_in", 0))),
+        )
+
     def fetch_profile(self, token):
         with httpx.Client(base_url=GRAPH, timeout=20) as client:
             me = client.get(

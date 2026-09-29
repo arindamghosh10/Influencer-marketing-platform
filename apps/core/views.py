@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from . import ops_health
 from .permissions import ops_required
 
 
@@ -83,5 +84,8 @@ def ops_dashboard(request):
         ),
         "payouts_due": Payout.objects.filter(status=Payout.Status.RELEASABLE).select_related("creator"),
         "time_travel": settings.DEBUG,
+        "funnel": ops_health.funnel(),
+        "stuck": ops_health.stuck(),
+        "integrations": ops_health.integrations(),
     }
     return render(request, "core/ops.html", context)

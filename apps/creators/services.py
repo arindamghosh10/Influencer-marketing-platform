@@ -66,13 +66,16 @@ def authenticity_score(profile):
     return int(max(0, min(100, score)))
 
 
-def apply_instagram_profile(creator, token, profile):
+def apply_instagram_profile(creator, token, profile, *, refresh_keywords=True):
     creator.ig_username = profile.username
     creator.ig_user_id = profile.user_id
     creator.ig_access_token = token.access_token
     creator.ig_token_expires_at = token.expires_at
     creator.ig_connected_at = creator.ig_connected_at or timezone.now()
     creator.ig_synced_at = timezone.now()
+    creator.ig_sync_failures = 0
+    creator.ig_sync_error = ""
+    creator.ig_needs_reconnect = False
     creator.followers = profile.followers
     creator.avg_reach = profile.avg_reach
     creator.avg_views = profile.avg_views
@@ -81,7 +84,8 @@ def apply_instagram_profile(creator, token, profile):
     creator.audience_india_pct = profile.audience_india_pct
     creator.audience_top_cities = profile.audience_top_cities
     creator.audience_age = profile.audience_age
-    creator.content_keywords = text_keywords(profile.recent_captions)
+    if refresh_keywords:
+        creator.content_keywords = text_keywords(profile.recent_captions)
     creator.sponsored_posts_30d = profile.sponsored_posts_30d
     creator.authenticity_score = authenticity_score(profile)
     creator.save()

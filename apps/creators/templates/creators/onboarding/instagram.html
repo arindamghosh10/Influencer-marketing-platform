@@ -3,6 +3,7 @@
 {% block step %}
 <h2 class="mb-1 font-semibold">Connect your Instagram</h2>
 <p class="mb-4 text-sm text-slate-600">We read your follower count, recent posts and audience insights (age, gender, cities) to match you with the right brands. We never see your password and never post anything without your approval.</p>
+{% if creator.ig_needs_reconnect %}<p class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">Your Instagram connection stopped working. Reconnect below to keep getting offers.</p>{% endif %}
 {% if creator.ig_connected %}
   <div class="mb-4 grid gap-3 sm:grid-cols-4">
     <div class="stat"><p class="stat-label">Account</p><p class="mt-1 font-semibold">@{{ creator.ig_username }}</p></div>

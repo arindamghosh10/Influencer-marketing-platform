@@ -50,6 +50,11 @@ class CreatorProfile(TimeStampedModel):
     ig_token_expires_at = models.DateTimeField(null=True, blank=True)
     ig_connected_at = models.DateTimeField(null=True, blank=True)
     ig_synced_at = models.DateTimeField(null=True, blank=True)
+    # Daily sync health. After repeated failures (or an expired token) the creator must
+    # reconnect, and isn't matched to new campaigns until they do.
+    ig_sync_failures = models.PositiveSmallIntegerField(default=0)
+    ig_sync_error = models.CharField(max_length=300, blank=True)
+    ig_needs_reconnect = models.BooleanField(default=False)
     followers = models.PositiveIntegerField(default=0)
     avg_reach = models.PositiveIntegerField(default=0, help_text="Average reach per recent post")
     avg_views = models.PositiveIntegerField(default=0, help_text="Average Reel plays")
