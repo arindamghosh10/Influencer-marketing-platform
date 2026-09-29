@@ -84,3 +84,12 @@ def paid_slot(client, seeded, brand_user):
     slot = Slot.objects.get(pk=offer.slot_id)
     assert slot.status == Slot.Status.CONFIRMED
     return slot
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()

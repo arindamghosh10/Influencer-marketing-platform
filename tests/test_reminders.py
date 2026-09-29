@@ -62,3 +62,18 @@ def test_draft_deadline_reminder(paid_slot):
     assert send_reminders(timezone.now()) == 0
     assert send_reminders(timezone.now() + timedelta(days=4)) == 1
     assert Offer.objects.filter(slot=paid_slot).exists()
+
+
+@pytest.mark.django_db
+def test_ops_time_skip_accepts_fractions_for_reminders(client, settings, shortlisted):  # noqa: F811
+    from django.urls import reverse
+
+    from apps.accounts.models import User
+
+    settings.DEBUG = True
+    offer, _ = _send(client, shortlisted)
+    client.force_login(User.objects.get(email="ops@demo.local"))
+    client.post(reverse("core:run_jobs"), {"days": "1.75"})
+    offer.refresh_from_db()
+    assert offer.status == Offer.Status.PENDING
+    assert offer.creator.user.notifications.filter(title__contains="expires in").exists()

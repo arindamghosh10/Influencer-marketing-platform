@@ -31,6 +31,10 @@ A two-sided marketplace for India. Brands share a product link and budget and ge
 | Refunds: creator withdrawal or ops cancellation before approval refunds the brand with a GST credit note (own gap-free series); unpaid stale slots refunded automatically; billing shows net spend | ✅ |
 | Disputes: brand or creator reports a problem, payout held while open, ops evidence pack (agreements, consents with hashes, drafts, reviews, post checks, timeline), resolve as pay creator / full refund / split | ✅ |
 | Rebooking: "Run again" copies a campaign's settings and confirmed brief, with creators who delivered picked first; "Add creators" finds more creators for a running campaign (extra budget, excludes everyone already offered), billed on a separate invoice | ✅ |
+| Instagram sync: daily stats refresh and token renewal; creators whose access breaks are asked to reconnect and paused from new matches | ✅ |
+| Reminders before deadlines: offer expiring, payment due, draft auto-approval, final OK pending, content deadline | ✅ |
+| Ops console: campaign funnel with GMV and margin, "needs attention" list, integration health with scheduler heartbeat | ✅ |
+| Hardening: login/sign-up/OTP rate limits, production security settings, terms and DPDP privacy notice (drafts for legal review), data download and deletion requests | ✅ |
 | Deployment (Oracle Cloud free tier) | Later |
 
 ## Run it locally

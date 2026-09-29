@@ -135,6 +135,16 @@ def stuck(now=None):
         lambda c: reverse("admin:creators_creatorprofile_change", args=[c.pk]),
         "Publishing and post checks need their Instagram access.",
     )
+    from .models import DataRequest
+
+    add(
+        "Data deletion requests (reply within 30 days)",
+        DataRequest.objects.filter(status=DataRequest.Status.OPEN)
+        .select_related("user")
+        .order_by("created_at"),
+        lambda r: f"{r.user.email} · received {timezone.localtime(r.created_at):%d %b}",
+        lambda r: reverse("admin:core_datarequest_change", args=[r.pk]),
+    )
     add(
         "Slots nobody could fill (last 30 days)",
         Slot.objects.filter(

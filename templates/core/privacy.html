@@ -1,0 +1,53 @@
+{% extends "core/_legal.html" %}
+{% block title %}Privacy notice · {{ PLATFORM_NAME }}{% endblock %}
+{% block legal %}
+<h1 class="text-2xl font-semibold text-slate-900">Privacy notice</h1>
+<p class="text-xs text-slate-500">Last updated {{ updated }}</p>
+<p>{{ legal_name }} ("we") decides how your personal data is used on {{ PLATFORM_NAME }} (we're the "data fiduciary" under India's Digital Personal Data Protection Act, 2023). This notice explains what we collect, why, and your rights.</p>
+
+<h2>What we collect</h2>
+<ul>
+  <li><strong>Account:</strong> name, email, password (stored hashed), role.</li>
+  <li><strong>Creators:</strong> profile, niches, rates, content preferences; from Instagram (only with your permission): username, follower count, recent posts and captions, and audience insights (age, gender, cities); PAN and bank details for payouts (stored encrypted).</li>
+  <li><strong>Brands:</strong> company details, GSTIN, PAN, website, product information.</li>
+  <li><strong>Campaigns:</strong> offers, agreements you sign (with the exact text, time and IP address), drafts and final content, reviews, post performance.</li>
+  <li><strong>Payments:</strong> invoices and payment status. Card and bank details you enter at checkout go to our payment provider, not to us.</li>
+</ul>
+
+<h2>Why we use it</h2>
+<ul>
+  <li>To match brands and creators, run campaigns, publish and verify posts, and pay people.</li>
+  <li>To keep records the law requires (tax, invoices, TDS) and to settle disputes.</li>
+  <li>To keep the service secure and prevent fraud (for example fake engagement).</li>
+  <li>To send you service messages. We don't sell your data or use it for unrelated advertising.</li>
+</ul>
+<p>We rely on the consent you give when you sign up and sign agreements, and on legal obligations for tax and payment records. You can review and withdraw optional consents on your <strong>Consents</strong> page; withdrawing some (like Instagram access) means we can't offer you campaigns.</p>
+
+<h2>Who we share it with</h2>
+<ul>
+  <li><strong>Between brands and creators:</strong> brands see a creator's public profile, stats and content for their campaign; creators see the brand and campaign details. Neither side sees the other's payment details.</li>
+  <li><strong>Service providers</strong> who process data for us: Meta (Instagram API), our payment provider (Razorpay), email delivery, cloud hosting and, when enabled, Google's Gemini API for reading product pages (product information only).</li>
+  <li><strong>Authorities</strong> when the law requires it (for example tax filings).</li>
+</ul>
+
+<h2>How long we keep it</h2>
+<p>While your account is active, and afterwards only as long as needed: invoices, tax and payment records for 8 years; signed agreements and consent records for as long as a claim could arise; other data is deleted or anonymised after an erasure request or account closure.</p>
+
+<h2>Your rights</h2>
+<ul>
+  <li><strong>Access:</strong> download a copy of your data from <a class="link" href="{% url 'core:my_data' %}">Your data</a>.</li>
+  <li><strong>Correction:</strong> edit your profile, or ask us to fix anything you can't change yourself.</li>
+  <li><strong>Erasure:</strong> ask us to delete your data from <a class="link" href="{% url 'core:my_data' %}">Your data</a>. We reply within 30 days.</li>
+  <li><strong>Grievances:</strong> contact our Grievance Officer. If you're not satisfied, you can complain to the Data Protection Board of India.</li>
+  <li><strong>Nominate</strong> someone to exercise these rights if you die or become unable to.</li>
+</ul>
+
+<h2>Security</h2>
+<p>We encrypt sensitive fields (PAN, bank details, Instagram access), use HTTPS, limit staff access, and keep an audit log. If a breach affects you, we'll tell you and the Data Protection Board as the law requires.</p>
+
+<h2>Children</h2>
+<p>The service is only for people aged 18 and over.</p>
+
+<h2>Contact</h2>
+<p>{{ grievance_officer }}, {{ legal_name }}{% if address %}, {{ address }}{% endif %}. Email: <a class="link" href="mailto:{{ grievance_email }}">{{ grievance_email }}</a></p>
+{% endblock %}

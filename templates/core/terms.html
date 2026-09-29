@@ -1,0 +1,56 @@
+{% extends "core/_legal.html" %}
+{% block title %}Terms of use · {{ PLATFORM_NAME }}{% endblock %}
+{% block legal %}
+<h1 class="text-2xl font-semibold text-slate-900">Terms of use</h1>
+<p class="text-xs text-slate-500">Last updated {{ updated }}</p>
+<p>These terms apply to everyone who uses {{ PLATFORM_NAME }}, run by {{ legal_name }}{% if address %}, {{ address }}{% endif %} ("we"). Brands and creators also sign a separate agreement when they join and for each campaign; if anything here conflicts with a signed agreement, the signed agreement wins.</p>
+
+<h2>1. Who can use it</h2>
+<ul>
+  <li>You must be at least 18 and able to enter a contract under Indian law.</li>
+  <li>Brands must be a genuine business selling legal products. Creators must own the Instagram account they connect.</li>
+  <li>Keep your login safe. You're responsible for activity on your account.</li>
+</ul>
+
+<h2>2. How the service works</h2>
+<ul>
+  <li>Brands buy advertising services from us: we find creators, manage content, publishing and checks.</li>
+  <li>Creators provide content services to us for each campaign they accept.</li>
+  <li>Each side sees and agrees to its own price. Brands pay us; we pay creators. The difference covers our service.</li>
+</ul>
+
+<h2>3. Payments, refunds and payouts</h2>
+<ul>
+  <li>Brands pay (plus GST) only for creators who accepted. If a creator can't deliver before the brand approves the content, the brand is refunded with a credit note.</li>
+  <li>Creators are paid after their post has stayed live, unedited and with its ad disclosure for {{ PLATFORM_NAME }}'s verification period (currently 7 days). TDS is deducted as required by law.</li>
+  <li>If a post is removed or edited during the minimum live period, the payout can be held or recovered.</li>
+</ul>
+
+<h2>4. Content and usage rights</h2>
+<ul>
+  <li>Creators keep ownership of their content. For each campaign, the brand gets a licence to use the approved content, including in paid ads, for the number of days shown in that campaign's agreement.</li>
+  <li>Nothing is posted without the creator's final approval of the exact file. AI-assisted content that uses a creator's likeness needs the creator's separate consent.</li>
+  <li>All sponsored posts must carry a clear ad disclosure as required by ASCI guidelines. Claims about a product need proof from the brand.</li>
+</ul>
+
+<h2>5. Not allowed</h2>
+<ul>
+  <li>Products and categories that are illegal or that we list as blocked (such as tobacco, gambling and adult products).</li>
+  <li>Fake followers or engagement, misleading claims, or content that infringes someone else's rights.</li>
+  <li>Dealing directly with a brand or creator you met here to avoid the platform, for 12 months after your last campaign together.</li>
+</ul>
+
+<h2>6. Disputes</h2>
+<p>If something goes wrong in a campaign, report it from the campaign page. We review the evidence (agreements, drafts, reviews, post checks) and decide how payment is settled. Contact us at {{ grievance_email }} if you disagree with the outcome.</p>
+
+<h2>7. Liability</h2>
+<p>We work to keep the service available and accurate, but results of a campaign (reach, views, sales) are not guaranteed. To the extent the law allows, our liability for any claim is limited to the amount you paid us, or we paid you, for the campaign concerned.</p>
+
+<h2>8. Ending use</h2>
+<p>You can stop using the service at any time; campaigns already accepted must still be completed or cancelled under their terms. We may suspend accounts that break these terms.</p>
+
+<h2>9. Law</h2>
+<p>These terms are governed by the laws of India. Courts at the location of our registered office have jurisdiction.</p>
+
+<p>Questions: {{ grievance_email }}. See also our <a class="link" href="{% url 'core:privacy' %}">privacy notice</a>.</p>
+{% endblock %}

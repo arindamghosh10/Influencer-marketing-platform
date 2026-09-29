@@ -9,4 +9,7 @@ urlpatterns = [
     path("notifications/", views.notifications, name="notifications"),
     path("ops/", views.ops_dashboard, name="ops"),
     path("ops/run-jobs/", views.run_jobs, name="run_jobs"),
+    path("terms/", views.terms, name="terms"),
+    path("privacy/", views.privacy, name="privacy"),
+    path("account/data/", views.my_data, name="my_data"),
 ]

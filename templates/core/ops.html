@@ -8,7 +8,7 @@
     {% if time_travel %}
     <form method="post" action="{% url 'core:run_jobs' %}" class="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-2 py-1 text-sm text-amber-900" title="Local testing only (DEBUG). Nothing is changed except what the jobs do.">{% csrf_token %}
       <label for="days">Test: run as if</label>
-      <input id="days" name="days" type="number" min="1" max="60" value="8" class="w-16 rounded border border-amber-300 px-2 py-0.5">
+      <input id="days" name="days" type="number" min="0.25" max="60" step="0.25" value="8" class="w-16 rounded border border-amber-300 px-2 py-0.5">
       <span>days passed</span>
       <button class="btn-secondary px-2 py-0.5 text-xs">Run</button>
     </form>

@@ -70,3 +70,25 @@ class JobHeartbeat(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DataRequest(models.Model):
+    """A person's request to erase their data (DPDP Act). Ops handles it within 30 days."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        DONE = "done", "Completed"
+        REJECTED = "rejected", "Declined (explained to the person)"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="data_requests")
+    reason = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
+    ops_note = models.TextField(blank=True, help_text="What was deleted, and what is kept and why")
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Erasure request by {self.user} ({self.get_status_display()})"

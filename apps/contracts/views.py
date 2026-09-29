@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.core.forms import StyledFormMixin
+from apps.core.ratelimit import ratelimit
 
 from . import services
 from .models import ConsentScope
@@ -21,6 +22,7 @@ class OtpForm(StyledFormMixin, forms.Form):
 
 
 @login_required
+@ratelimit("otp-send", limit=5, window=15 * 60, by="user")
 def sign(request):
     data = services.pending(request)
     if not data:
@@ -53,6 +55,7 @@ def verify(request):
 
 @login_required
 @require_POST
+@ratelimit("otp-send", limit=5, window=15 * 60, by="user")
 def resend(request):
     if services.pending(request):
         data = services.pending(request)

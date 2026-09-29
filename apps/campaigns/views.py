@@ -7,6 +7,7 @@ from apps.brands.views import get_brand
 from apps.core.events import events_for, record
 from apps.core.permissions import brand_required
 from apps.core.pricing import gst
+from apps.core.ratelimit import ratelimit
 from apps.matching import services as matching
 from apps.matching.models import MatchCandidate
 from apps.matching.views_models import brand_candidates
@@ -98,6 +99,7 @@ def _campaign(request, pk):
 
 
 @brand_required
+@ratelimit("campaign-create", limit=20, window=60 * 60, by="user")
 def create(request):
     brand = get_brand(request)
     if brand is None:

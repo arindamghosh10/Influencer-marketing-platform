@@ -28,7 +28,7 @@ in a private/incognito window, so you don't have to log out and in all the time.
 
 **Skipping time.** Some steps normally wait for days (48h to answer an offer, 7 days of post
 checks before a creator is paid). Log in as ops, open **Ops** (`/ops/`) and use
-**Test: run as if [8] days passed → Run**. This only exists while `DEBUG=true` (your local
+**Test: run as if [8] days passed → Run** (fractions work too, e.g. 1.75). This only exists while `DEBUG=true` (your local
 `.env`). Keep in mind it also expires unanswered offers and auto-approves drafts that are
 waiting for review, exactly as the real deadlines would.
 
@@ -190,6 +190,33 @@ and run `devserver` again. It recreates and reseeds the database.
 - Every signed agreement is stored with its exact text and a fingerprint (SHA-256); open it from
   the consents page.
 - Ops: `/admin/` → Core → Events is the full audit log.
+
+## 11. Reminders, Instagram health and the ops console
+
+1. **Reminders:** send offers (scenario 1), then as ops run **as if 1.75 days passed**
+   (42 hours: inside the last 12 hours of the 48-hour offer, but before it expires): each creator with an open offer gets
+   "Your offer … expires in …" (bell and in the terminal as an email). Run it again: no
+   duplicate. The same happens for brands before payment is due and before a draft is
+   auto-approved.
+2. **Instagram reconnect:** `/admin/` → Creators → open one → tick **Ig needs reconnect** → save.
+   Log in as that creator: the dashboard asks them to reconnect, and they no longer appear in
+   new matches. Reconnecting from the banner clears it.
+3. **Ops console** (`/ops/`): the funnel (created → confirmed → offers → paid → live →
+   completed) with GMV and margin, **Needs attention** (failed publishing, posts on hold,
+   failed refunds, overdue payouts, creators who must reconnect, deletion requests) and
+   **Integrations** (scheduler last run, AI, Instagram, payments).
+
+## 12. Privacy and security
+
+1. Footer → **Terms** and **Privacy** work without logging in.
+2. Logged in → footer → **Your data** → **Download my data** gives a JSON file.
+
+   ✅ Check: a creator's file has their fee but no brand prices; a brand's file has prices but
+   no creator fees; no full PAN, bank number or Instagram token appears.
+3. **Request deletion** → ops gets a notification and it shows under **Needs attention**.
+   Ops closes it in `/admin/` → Core → Data requests.
+4. Try logging in with a wrong password 6 times: the account is paused for 15 minutes
+   ("Too many attempts"). Other accounts still work. (Restarting the server clears it.)
 
 ---
 

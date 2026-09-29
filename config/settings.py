@@ -78,6 +78,10 @@ DATABASES = {
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
+# Cache (rate limits). In-memory locally; set CACHE_URL=rediscache://... in production so limits
+# are shared by all web workers.
+CACHES = {"default": env.cache_url_config(env("CACHE_URL", default="") or "locmemcache://")}
+
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "core:home"
@@ -124,6 +128,10 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)  # usually done by the proxy
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    SESSION_COOKIE_HTTPONLY = True
 
 # ---------------------------------------------------------------------------
 # Platform business settings
@@ -183,6 +191,9 @@ PLATFORM_ADDRESS = env("PLATFORM_ADDRESS", default="")
 PLATFORM_STATE_CODE = env("PLATFORM_STATE_CODE", default="27")
 SAC_CODE = env("SAC_CODE", default="998361")  # Advertising services
 INVOICE_PREFIX = env("INVOICE_PREFIX", default="CB")
+# Shown in the privacy notice (DPDP Act: contact for questions and grievances).
+GRIEVANCE_OFFICER = env("GRIEVANCE_OFFICER", default="Grievance Officer")
+GRIEVANCE_EMAIL = env("GRIEVANCE_EMAIL", default="privacy@example.com")
 
 # Scheduled jobs (Celery Beat). Deadlines live in the database, so a missed run just
 # gets picked up by the next one.
